@@ -1,0 +1,13 @@
+Apr 10 14:22:31 server01 sshd[12345]: Accepted password for admin from 192.168.1.100 port 54321 ssh2
+Apr 10 14:23:05 server01 sshd[12346]: Failed password for root from 10.0.0.55 port 44321 ssh2
+Apr 10 14:23:10 server01 sshd[12347]: Failed password for root from 10.0.0.55 port 44322 ssh2
+Apr 10 14:23:15 server01 sshd[12348]: Failed password for root from 10.0.0.55 port 44323 ssh2
+Apr 10 14:23:20 server01 sshd[12349]: Failed password for root from 10.0.0.55 port 44324 ssh2
+Apr 10 14:23:25 server01 sshd[12350]: Failed password for root from 10.0.0.55 port 44325 ssh2
+Apr 10 14:24:00 server01 sshd[12351]: Accepted password for jsmith from 192.168.1.105 port 54322 ssh2
+Apr 10 14:25:00 server01 sshd[12352]: Invalid user mysql from 185.220.101.34 port 45678 ssh2
+Apr 10 14:25:05 server01 sshd[12353]: Failed password for invalid user mysql from 185.220.101.34 port 45679 ssh2
+Apr 10 14:26:00 server01 sshd[12354]: Accepted password for dbadmin from 10.0.0.200 port 54323 ssh2
+Apr 10 14:27:00 server01 sshd[12355]: Failed password for admin from 91.121.45.123 port 44326 ssh2
+Apr 10 14:27:05 server01 sshd[12356]: Failed password for admin from 91.121.45.123 port 44327 ssh2
+Apr 10 14:27:10 server01 sshd[12357]: Failed password for admin from 91.121.45.123 port 44328 ssh2
