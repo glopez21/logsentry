@@ -30,13 +30,13 @@ I built LogSentry to practice analyzing security logs and develop detection skil
 uv sync
 
 # Run with sample data
-uv run python main.py samples/sample_ssh_log.log
+uv run main.py samples/sample_ssh_log.log
 
 # Generate triage summary
-uv run python main.py samples/sample_ssh_log.log --triage-summary
+uv run main.py samples/sample_ssh_log.log --triage-summary
 
 # Export to CSV
-uv run python main.py samples/sample_ssh_log.log -o csv
+uv run main.py samples/sample_ssh_log.log -o csv
 ```
 
 ## Case Study Scenarios (SOC Practice)
@@ -45,12 +45,12 @@ Generate realistic attack scenarios for interview training:
 
 ```bash
 # Generate a specific scenario as CSV
-uv run python generate_logs.py -s brute -o case_brute_force.csv --output-format csv
-uv run python generate_logs.py -s lateral -o case_lateral.csv --output-format csv
-uv run python generate_logs.py -s exfil -o case_exfil.csv --output-format csv
+uv run generate_logs.py -s brute -o case_brute_force.csv --output-format csv
+uv run generate_logs.py -s lateral -o case_lateral.csv --output-format csv
+uv run generate_logs.py -s exfil -o case_exfil.csv --output-format csv
 
 # Generate all scenarios combined
-uv run python generate_logs.py -s all --seed 42 -o combined.log
+uv run generate_logs.py -s all --seed 42 -o combined.log
 ```
 
 | Scenario | Events | Description | MITRE Technique |
@@ -69,84 +69,20 @@ uv run python generate_logs.py -s all --seed 42 -o combined.log
 
 ```bash
 # Watch a log file in real-time (like tail -f)
-uv run python main.py watch /var/log/auth.log
+uv run main.py watch /var/log/auth.log
 
 # Watch and process existing lines first
-uv run python main.py watch /var/log/auth.log --once
+uv run main.py watch /var/log/auth.log --once
 
 # Listen for syslog messages (UDP)
-uv run python main.py listen --port 514 --protocol udp
+uv run main.py listen --port 514 --protocol udp
 
 # Listen on TCP
-uv run python main.py listen --port 514 --protocol tcp
+uv run main.py listen --port 514 --protocol tcp
 
 # Create AlertFlow ticket
-uv run python main.py ticket "Brute force detected" -s critical
+uv run main.py ticket "Brute force detected" -s critical
 ```
-
-## Usage
-
-### Parse Commands
-
-| Command | Description |
-|---------|-------------|
-| `uv run python main.py <logfile>` | Parse log file with auto-detection |
-| `uv run python main.py <logfile> -f ssh` | Force SSH format parsing |
-| `uv run python main.py <logfile> -o csv` | Export to CSV |
-| `uv run python main.py <logfile> -o json` | Export to JSON |
-| `uv run python main.py <logfile> --triage-summary` | Generate detection summary |
-| `uv run python main.py <logfile> --severity` | Add severity scores to events |
-| `uv run python main.py <logfile> --timeline` | Generate sorted event timeline |
-| `uv run python main.py <logfile> --correlate` | Correlate related events |
-| `uv run python main.py <logfile> --mitre` | Show MITRE ATT&CK tactics |
-| `uv run python main.py <logfile> --report` | Generate Markdown incident report |
-| `uv run python main.py <logfile> -i IP` | Enrich IP with threat intelligence |
-
-### Watch Commands (Real-Time)
-
-| Command | Description |
-|---------|-------------|
-| `uv run python main.py watch <logfile>` | Watch file in real-time |
-| `uv run python main.py watch <logfile> --once` | Process existing lines first |
-| `uv run python main.py watch <logfile> --severity-threshold high` | Only show high+ severity |
-
-### Listen Commands (Syslog)
-
-| Command | Description |
-|---------|-------------|
-| `uv run python main.py listen --port 514` | Listen on UDP (default) |
-| `uv run python main.py listen --protocol tcp` | Listen on TCP |
-| `uv run python main.py listen --bind 127.0.0.1` | Custom bind address |
-
-### Ticket Commands
-
-| Command | Description |
-|---------|-------------|
-| `uv run python main.py ticket "Title" -s critical` | Create ticket with severity |
-| `uv run python main.py ticket "Title" -s high --webhook URL` | Using custom webhook |
-
-## Advanced Analysis
-
-```bash
-# Severity scoring (critical/high/medium/low/info)
-uv run python main.py case.log --severity
-
-# Timeline sorted by severity
-uv run python main.py case.log --timeline
-
-# Attack correlation chains
-uv run python main.py case.log --correlate
-
-# MITRE ATT&CK tactics
-uv run python main.py case.log --mitre
-
-# Generate incident report
-uv run python main.py case.log --report --report-title "My Incident"
-
-# IP enrichment
-uv run python main.py case.log -i 185.220.101.45
-```
-
 ## Supported Log Formats
 
 - **syslog** - Standard Linux syslog
