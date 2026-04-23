@@ -22,6 +22,7 @@ except ImportError:
 from parsers.syslog_parser import parse_syslog
 from parsers.ssh_parser import parse_ssh_log
 from parsers.auth_parser import parse_auth_log
+from parsers.cloudtrail_parser import parse_cloudtrail, detect_cloudtrail
 from detection.detection_checks import run_detection_checks
 from output.formatter import format_output
 from output.advanced import (
@@ -38,11 +39,16 @@ LOG_PARSERS = {
     "syslog": parse_syslog,
     "ssh": parse_ssh_log,
     "auth": parse_auth_log,
+    "cloudtrail": parse_cloudtrail,
 }
 
 
 def detect_format(log_line: str) -> Optional[str]:
     """Auto-detect log format from line content."""
+    # Check for CloudTrail JSON first
+    if detect_cloudtrail(log_line):
+        return "cloudtrail"
+    
     if "sshd" in log_line and ("Accepted" in log_line or "Failed" in log_line or "Invalid" in log_line):
         return "ssh"
     if "ssh" in log_line.lower() and ("session" in log_line.lower() or "login" in log_line.lower()):
@@ -116,7 +122,7 @@ Examples:
     # Parse command (default)
     parse_parser = subparsers.add_parser("parse", help="Parse log file (default)")
     parse_parser.add_argument("logfile", help="Path to log file")
-    parse_parser.add_argument("-f", "--format", choices=["auto", "syslog", "ssh", "auth"], default="auto")
+    parse_parser.add_argument("-f", "--format", choices=["auto", "syslog", "ssh", "auth", "cloudtrail"], default="auto")
     parse_parser.add_argument("-o", "--output", choices=["csv", "json", "table"], default="table")
     parse_parser.add_argument("--triage-summary", action="store_true", help="Generate triage summary")
     parse_parser.add_argument("--severity", action="store_true", help="Add severity scores")

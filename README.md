@@ -144,6 +144,7 @@ uv run python main.py case.log -i 185.220.101.45
 - **syslog** - Standard Linux syslog
 - **ssh** - OpenSSH authentication logs
 - **auth** - PAM/system authentication logs
+- **cloudtrail** - AWS CloudTrail JSON logs
 
 ## Detection Features
 
