@@ -1,0 +1,11 @@
+timestamp,host,process,event_type,message,source_ip,destination_ip,user
+Apr 22 08:00:00,localhost,smbd,suspicious,SMB session: user=jsmith from 192.168.1.50 to 192.168.1.10,192.168.1.50,192.168.1.10,jsmith
+Apr 22 08:00:15,localhost,winrm,suspicious,WinRM: remote command execution on 192.168.1.10 from 192.168.1.50,192.168.1.10,192.168.1.50,
+Apr 22 08:00:30,localhost,wmi,lateral,WMI: provider lateral_movement from 192.168.1.50 user=administrator,192.168.1.50,192.168.1.50,administrator
+Apr 22 08:00:45,localhost,smbd,suspicious,SMB session: user=admin from 192.168.1.10 to 192.168.1.20,192.168.1.10,192.168.1.20,admin
+Apr 22 08:01:00,localhost,rdp,suspicious,RDP connection established: 192.168.1.20 <- 192.168.1.50,192.168.1.20,192.168.1.50,
+Apr 22 08:01:15,localhost,psexec,suspicious,PSEXEC: service deployed on 192.168.1.20 from 192.168.1.50,192.168.1.20,192.168.1.50,
+Apr 22 08:01:30,localhost,smbd,suspicious,SMB session: user=root from 192.168.1.20 to 192.168.1.30,192.168.1.20,192.168.1.30,root
+Apr 22 08:01:45,localhost,winrm,suspicious,WinRM: remote command executed as SYSTEM on 192.168.1.30,192.168.1.30,192.168.1.30,
+Apr 22 08:02:00,localhost,dcsync,suspicious,DCSync attack: domain replication from 192.168.1.40,192.168.1.40,192.168.1.40,
+Apr 22 08:02:15,localhost,alert,lateral_alert,LATERAL MOVEMENT DETECTED: chain 192.168.1.50 -> 192.168.1.10 -> 192.168.1.20 -> 192.168.1.30,192.168.1.50,192.168.1.30,

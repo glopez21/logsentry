@@ -1,0 +1,11 @@
+timestamp,host,process,event_type,message,source_ip,destination_ip,user
+Apr 22 08:00:00,localhost,ARP,mitm_suspicious,ARP spoofing detected: 185.220.101.45 claims 192.168.1.1,185.220.101.45,192.168.1.1,
+Apr 22 08:00:05,localhost,dhcpd,mitm_suspicious,DHCP spoofing: fake DHCP server at 185.220.101.45,185.220.101.45,185.220.101.45,
+Apr 22 08:00:10,localhost,sshd,mitm_suspicious,WARNING: Host key verification failed for 192.168.1.25,192.168.1.25,192.168.1.25,
+Apr 22 08:00:15,localhost,sshd,mitm_suspicious,Man-in-the-middle attack detected: 185.220.101.45 -> 192.168.1.25,185.220.101.45,192.168.1.25,
+Apr 22 08:00:20,localhost,system,mitm_suspicious,DNS poisoning attempt from 185.220.101.45,185.220.101.45,185.220.101.45,
+Apr 22 08:00:25,localhost,ssl,mitm_suspicious,SSL certificate mismatch for 192.168.1.25,192.168.1.25,192.168.1.25,
+Apr 22 08:00:30,localhost,network,mitm_suspicious,Traffic redirected through 185.220.101.45,185.220.101.45,185.220.101.45,
+Apr 22 08:00:35,localhost,firewall,mitm_suspicious,Suspicious ARP replies from 185.220.101.45,185.220.101.45,185.220.101.45,
+Apr 22 08:00:40,localhost,auth,mitm_suspicious,Credential capture suspected: 192.168.1.25,192.168.1.25,192.168.1.25,
+Apr 22 08:00:45,localhost,alert,mitm_alert,MITM ATTACK IN PROGRESS: 192.168.1.25 compromised,192.168.1.25,192.168.1.25,

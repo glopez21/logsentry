@@ -1,0 +1,776 @@
+Apr 22 08:00:22 localhost cron: Connection from 192.168.1.33 accepted
+Apr 22 08:01:02 localhost sshd: received disconnect from 192.168.1.26 port 20269 ssh2
+Apr 22 08:01:10 localhost systemd: password changed for backup
+Apr 22 08:02:34 localhost sshd: Received disconnect from 192.168.1.11 port 38160 ssh2
+Apr 22 08:05:42 localhost sshd: user deploy: TTY=tty1; PWD=/home/deploy;
+Apr 22 08:05:54 localhost cron: password changed for backup
+Apr 22 08:06:05 localhost CRON: User root running cron job
+Apr 22 08:07:41 localhost sshd: Received disconnect from 192.168.1.13 port 56668 ssh2
+Apr 22 08:10:53 localhost CRON: User jsmith running cron job
+Apr 22 08:12:36 localhost CRON: User admin running cron job
+Apr 22 08:14:09 localhost CRON: User agarcia running cron job
+Apr 22 08:15:15 localhost sshd: Connection from 192.168.1.6 accepted
+Apr 22 08:16:10 localhost cron: session opened for user admin
+Apr 22 08:16:11 localhost sshd: received disconnect from 192.168.1.46 port 5753 ssh2
+Apr 22 08:20:33 localhost login: session opened for user mwilson
+Apr 22 08:20:45 localhost sshd: accepted password for backup from 192.168.1.46 port 46863 ssh2
+Apr 22 08:21:08 localhost sshd: user developer logged in
+Apr 22 08:21:17 localhost sshd: Received disconnect from 192.168.1.21 port 17259 ssh2
+Apr 22 08:21:21 localhost sshd: Received disconnect from 192.168.1.38 port 51581 ssh2
+Apr 22 08:21:38 localhost kernel: New session for user agarcia
+Apr 22 08:22:06 localhost CRON: User developer running cron job
+Apr 22 08:22:48 localhost sshd: Started session for user developer
+Apr 22 08:23:15 localhost sshd: Received disconnect from 192.168.1.2 port 51270 ssh2
+Apr 22 08:24:34 localhost sshd: Received disconnect from 192.168.1.42 port 61578 ssh2
+Apr 22 08:25:32 localhost CRON: User sysop running cron job
+Apr 22 08:28:10 localhost sshd: Received disconnect from 192.168.1.13 port 12668 ssh2
+Apr 22 08:29:36 localhost nginx: New session for user backup
+Apr 22 08:30:25 localhost sshd: accepted password for ubuntu from 192.168.1.9 port 17981 ssh2
+Apr 22 08:30:58 localhost CRON: User ubuntu running cron job
+Apr 22 08:31:08 localhost sshd: Connection from 192.168.1.4 accepted
+Apr 22 08:31:45 localhost mysql: user backup: TTY=tty1; PWD=/home/backup;
+Apr 22 08:35:14 localhost systemd: user root: TTY=tty1; PWD=/home/root;
+Apr 22 08:36:35 localhost nginx: password changed for deploy
+Apr 22 08:39:19 localhost CRON: User agarcia running cron job
+Apr 22 08:39:26 localhost sshd: user developer logged in
+Apr 22 08:40:28 localhost sshd: session opened for user developer
+Apr 22 08:41:45 localhost sshd: user admin logged in
+Apr 22 08:41:59 localhost nginx: Connection from 192.168.1.34 accepted
+Apr 22 08:46:52 localhost sshd: Received disconnect from 192.168.1.43 port 56938 ssh2
+Apr 22 08:46:52 localhost mysql: password changed for admin
+Apr 22 08:47:36 localhost CRON: User deploy running cron job
+Apr 22 08:53:28 localhost mysql: session opened for user jsmith
+Apr 22 08:55:44 localhost login: New session for user deploy
+Apr 22 08:56:12 localhost sshd: user agarcia logged in
+Apr 22 08:58:53 localhost postfix: session closed for user ubuntu
+Apr 22 09:06:46 localhost CRON: User agarcia running cron job
+Apr 22 09:09:00 localhost sshd: password changed for deploy
+Apr 22 09:12:18 localhost nginx: user root logged in
+Apr 22 09:13:34 localhost mysql: received disconnect from 192.168.1.43 port 64908 ssh2
+Apr 22 09:14:46 localhost sshd: Received disconnect from 192.168.1.3 port 13355 ssh2
+Apr 22 09:21:56 localhost kernel: Connection from 192.168.1.5 accepted
+Apr 22 09:23:41 localhost sshd: Received disconnect from 192.168.1.43 port 24355 ssh2
+Apr 22 09:24:06 localhost sshd: Received disconnect from 192.168.1.42 port 24338 ssh2
+Apr 22 09:24:28 localhost systemd: Started session for user developer
+Apr 22 09:27:17 localhost sshd: session opened for user backup
+Apr 22 09:29:25 localhost mysql: session closed for user admin
+Apr 22 09:30:04 localhost login: received disconnect from 192.168.1.17 port 42091 ssh2
+Apr 22 09:30:31 localhost nginx: user sysop: TTY=tty1; PWD=/home/sysop;
+Apr 22 09:38:27 localhost sshd: Received disconnect from 192.168.1.32 port 26278 ssh2
+Apr 22 09:39:17 localhost sshd: Received disconnect from 192.168.1.3 port 63708 ssh2
+Apr 22 09:39:53 localhost sshd: user deploy logged in
+Apr 22 09:43:04 localhost systemd: New session for user agarcia
+Apr 22 09:44:09 localhost CRON: User jsmith running cron job
+Apr 22 09:51:48 localhost sshd: Received disconnect from 192.168.1.39 port 46330 ssh2
+Apr 22 09:59:52 localhost kernel: user root: TTY=tty1; PWD=/home/root;
+Apr 22 10:30:00 localhost sshd[TACTIC:T1110]: Invalid user jsmith from 77.45.123.89 port 14722 ssh2
+Apr 22 10:30:12 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 9257 ssh2
+Apr 22 10:30:24 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 48979 ssh2
+Apr 22 10:30:36 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 57634 ssh2
+Apr 22 10:30:48 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 58595 ssh2
+Apr 22 10:31:00 localhost sshd[TACTIC:T1110]: Invalid user agarcia from 77.45.123.89 port 52359 ssh2
+Apr 22 10:31:12 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 57936 ssh2
+Apr 22 10:31:24 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 6803 ssh2
+Apr 22 10:31:36 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 2291 ssh2
+Apr 22 10:31:48 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 4517 ssh2
+Apr 22 10:32:00 localhost sshd[TACTIC:T1110]: Invalid user admin from 77.45.123.89 port 54053 ssh2
+Apr 22 10:32:12 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 60502 ssh2
+Apr 22 10:32:24 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 4739 ssh2
+Apr 22 10:32:36 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 59053 ssh2
+Apr 22 10:32:48 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 43886 ssh2
+Apr 22 10:33:00 localhost sshd[TACTIC:T1110]: Invalid user backup from 77.45.123.89 port 58219 ssh2
+Apr 22 10:33:12 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 59216 ssh2
+Apr 22 10:33:24 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 39546 ssh2
+Apr 22 10:33:36 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 9244 ssh2
+Apr 22 10:33:48 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 23344 ssh2
+Apr 22 10:34:00 localhost sshd[TACTIC:T1110]: Invalid user deploy from 77.45.123.89 port 45610 ssh2
+Apr 22 10:34:12 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 19544 ssh2
+Apr 22 10:34:24 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 16917 ssh2
+Apr 22 10:34:36 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 25427 ssh2
+Apr 22 10:34:48 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 10920 ssh2
+Apr 22 10:35:00 localhost sshd[TACTIC:T1110]: Invalid user ubuntu from 77.45.123.89 port 2511 ssh2
+Apr 22 10:35:12 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 30390 ssh2
+Apr 22 10:35:24 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 25423 ssh2
+Apr 22 10:35:36 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 15927 ssh2
+Apr 22 10:35:48 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 19172 ssh2
+Apr 22 10:36:00 localhost sshd[TACTIC:T1110]: Invalid user backup from 77.45.123.89 port 62334 ssh2
+Apr 22 10:36:12 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 51176 ssh2
+Apr 22 10:36:24 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 46619 ssh2
+Apr 22 10:36:36 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 23962 ssh2
+Apr 22 10:36:48 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 21664 ssh2
+Apr 22 10:37:00 localhost sshd[TACTIC:T1110]: Invalid user admin from 77.45.123.89 port 36398 ssh2
+Apr 22 10:37:12 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 33763 ssh2
+Apr 22 10:37:24 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 47583 ssh2
+Apr 22 10:37:36 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 10421 ssh2
+Apr 22 10:37:48 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 20182 ssh2
+Apr 22 10:38:00 localhost sshd[TACTIC:T1110]: Invalid user sysop from 77.45.123.89 port 45139 ssh2
+Apr 22 10:38:12 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 6397 ssh2
+Apr 22 10:38:24 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 3927 ssh2
+Apr 22 10:38:36 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 60327 ssh2
+Apr 22 10:38:48 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 49674 ssh2
+Apr 22 10:39:00 localhost sshd[TACTIC:T1110]: Invalid user developer from 77.45.123.89 port 37647 ssh2
+Apr 22 10:39:12 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 5758 ssh2
+Apr 22 10:39:24 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 62346 ssh2
+Apr 22 10:39:36 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 23791 ssh2
+Apr 22 10:39:48 localhost sshd[TACTIC:T1078]: Failed password for admin from 77.45.123.89 port 59243 ssh2
+Apr 22 10:40:00 localhost sshd[TACTIC:T1078]: Maximum authentication attempts exceeded for admin from 77.45.123.89
+Apr 22 11:00:00 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:00 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:01 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:01 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:02 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:30618 to 192.168.1.10:80
+Apr 22 11:00:03 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:03 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:30378 to 192.168.1.10:80
+Apr 22 11:00:04 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:04 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:10509 to 192.168.1.10:80
+Apr 22 11:00:05 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:36305 to 192.168.1.10:80
+Apr 22 11:00:06 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:06 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:07 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:2664 to 192.168.1.10:80
+Apr 22 11:00:07 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:08 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:09 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:09 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:10 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:10 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:38040 to 192.168.1.10:80
+Apr 22 11:00:11 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:12 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:12 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:13 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:38575 to 192.168.1.10:80
+Apr 22 11:00:13 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:14 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:15 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:15 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:16 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:16 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:17 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:18 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:62016 to 192.168.1.10:80
+Apr 22 11:00:18 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:19 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:19 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:20 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:28107 to 192.168.1.10:80
+Apr 22 11:00:21 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:21 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:54476 to 192.168.1.10:80
+Apr 22 11:00:22 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:22 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:23 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:24 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:63848 to 192.168.1.10:80
+Apr 22 11:00:24 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:14526 to 192.168.1.10:80
+Apr 22 11:00:25 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:25 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:54306 to 192.168.1.10:80
+Apr 22 11:00:26 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:27 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:27 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:28 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:28 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:33670 to 192.168.1.10:80
+Apr 22 11:00:29 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:6586 to 192.168.1.10:80
+Apr 22 11:00:30 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:10648 to 192.168.1.10:80
+Apr 22 11:00:30 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:20929 to 192.168.1.10:80
+Apr 22 11:00:31 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:31 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:32 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:33 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:33 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:9325 to 192.168.1.10:80
+Apr 22 11:00:34 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:16503 to 192.168.1.10:80
+Apr 22 11:00:34 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:59851 to 192.168.1.10:80
+Apr 22 11:00:35 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:56058 to 192.168.1.10:80
+Apr 22 11:00:36 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:63031 to 192.168.1.10:80
+Apr 22 11:00:36 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:37 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:50943 to 192.168.1.10:80
+Apr 22 11:00:37 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:38 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:39 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:39 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:40 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:40 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:41 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:42 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:38802 to 192.168.1.10:80
+Apr 22 11:00:42 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:43 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:43 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:44 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:45 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:32677 to 192.168.1.10:80
+Apr 22 11:00:45 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:46 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:15792 to 192.168.1.10:80
+Apr 22 11:00:46 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:31744 to 192.168.1.10:80
+Apr 22 11:00:47 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:48 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:60418 to 192.168.1.10:80
+Apr 22 11:00:48 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:49 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:21763 to 192.168.1.10:80
+Apr 22 11:00:49 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:43094 to 192.168.1.10:80
+Apr 22 11:00:50 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:51 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:60009 to 192.168.1.10:80
+Apr 22 11:00:51 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:34457 to 192.168.1.10:80
+Apr 22 11:00:52 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:00:52 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:53 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:29916 to 192.168.1.10:80
+Apr 22 11:00:54 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:54 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:33309 to 192.168.1.10:80
+Apr 22 11:00:55 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:55 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:27478 to 192.168.1.10:80
+Apr 22 11:00:56 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:14682 to 192.168.1.10:80
+Apr 22 11:00:57 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:57 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:58 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:00:58 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:15140 to 192.168.1.10:80
+Apr 22 11:00:59 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:00 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:00 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:01 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:01 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:02 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:03 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:03 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:04 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:10920 to 192.168.1.10:80
+Apr 22 11:01:04 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:05 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:06 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:06 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:07 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:42683 to 192.168.1.10:80
+Apr 22 11:01:07 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:19526 to 192.168.1.10:80
+Apr 22 11:01:08 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:09 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:09 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:10 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:10 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:11 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:43178 to 192.168.1.10:80
+Apr 22 11:01:12 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:12 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:13 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:13 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:14 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:15 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:15 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:16 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:16 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:4779 to 192.168.1.10:80
+Apr 22 11:01:17 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:1335 to 192.168.1.10:80
+Apr 22 11:01:18 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:18 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:42101 to 192.168.1.10:80
+Apr 22 11:01:19 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:19479 to 192.168.1.10:80
+Apr 22 11:01:19 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:20 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:21 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:4896 to 192.168.1.10:80
+Apr 22 11:01:21 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:22 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:22 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:23 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:24 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:24 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:42452 to 192.168.1.10:80
+Apr 22 11:01:25 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:25 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:45833 to 192.168.1.10:80
+Apr 22 11:01:26 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:64610 to 192.168.1.10:80
+Apr 22 11:01:27 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:27 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:28 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:28 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:29 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:29511 to 192.168.1.10:80
+Apr 22 11:01:30 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:30 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:31 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:31 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:32 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:13953 to 192.168.1.10:80
+Apr 22 11:01:33 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:33 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:52934 to 192.168.1.10:80
+Apr 22 11:01:34 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:34 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:35 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:36 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:65198 to 192.168.1.10:80
+Apr 22 11:01:36 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:55410 to 192.168.1.10:80
+Apr 22 11:01:37 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:37 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:38 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:24705 to 192.168.1.10:80
+Apr 22 11:01:39 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:39 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:40 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:40 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:41 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:42 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:42 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:43 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:43 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:44 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:45 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:53192 to 192.168.1.10:80
+Apr 22 11:01:45 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:46 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:46 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:47 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:48 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:48 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:49 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:49 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:50 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:44446 to 192.168.1.10:80
+Apr 22 11:01:51 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:51 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:52 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:52 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:55742 to 192.168.1.10:80
+Apr 22 11:01:53 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:54 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:15661 to 192.168.1.10:80
+Apr 22 11:01:54 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:2259 to 192.168.1.10:80
+Apr 22 11:01:55 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:01:55 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:9133 to 192.168.1.10:80
+Apr 22 11:01:56 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:8748 to 192.168.1.10:80
+Apr 22 11:01:57 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:57 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:58 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:01:58 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:31929 to 192.168.1.10:80
+Apr 22 11:01:59 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:00 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:00 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:01 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:56242 to 192.168.1.10:80
+Apr 22 11:02:01 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:02 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:10587 to 192.168.1.10:80
+Apr 22 11:02:03 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:03 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:04 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:42803 to 192.168.1.10:80
+Apr 22 11:02:04 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:05 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:06 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:06 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:35569 to 192.168.1.10:80
+Apr 22 11:02:07 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:07 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:08 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:09 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:09 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:10 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:10 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:27585 to 192.168.1.10:80
+Apr 22 11:02:11 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:12 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:12 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:10087 to 192.168.1.10:80
+Apr 22 11:02:13 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:13 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:14 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:15 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:15 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:11051 to 192.168.1.10:80
+Apr 22 11:02:16 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:1064 to 192.168.1.10:80
+Apr 22 11:02:16 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:63193 to 192.168.1.10:80
+Apr 22 11:02:17 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:18 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:18 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:19 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:36784 to 192.168.1.10:80
+Apr 22 11:02:19 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:34061 to 192.168.1.10:80
+Apr 22 11:02:20 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:20830 to 192.168.1.10:80
+Apr 22 11:02:21 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:21 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:22 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:22 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:61644 to 192.168.1.10:80
+Apr 22 11:02:23 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:24 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:24 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:42001 to 192.168.1.10:80
+Apr 22 11:02:25 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:34080 to 192.168.1.10:80
+Apr 22 11:02:25 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:64938 to 192.168.1.10:80
+Apr 22 11:02:26 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:27 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:2066 to 192.168.1.10:80
+Apr 22 11:02:27 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:28 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:28 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:21755 to 192.168.1.10:80
+Apr 22 11:02:29 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:31444 to 192.168.1.10:80
+Apr 22 11:02:30 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:30 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:31 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:31 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:45457 to 192.168.1.10:80
+Apr 22 11:02:32 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:33 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:33 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:34 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:34 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:35 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:36 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:36 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:37 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:37 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:25198 to 192.168.1.10:80
+Apr 22 11:02:38 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:39 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:39 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:40 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:40602 to 192.168.1.10:80
+Apr 22 11:02:40 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:8177 to 192.168.1.10:80
+Apr 22 11:02:41 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:6756 to 192.168.1.10:80
+Apr 22 11:02:42 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:7321 to 192.168.1.10:80
+Apr 22 11:02:42 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:43 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:43 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:44 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:47134 to 192.168.1.10:80
+Apr 22 11:02:45 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:61728 to 192.168.1.10:80
+Apr 22 11:02:45 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:46 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:46 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:47 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:48 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:48 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:49 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:49 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:50 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:51 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:51 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:52 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:52 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:18594 to 192.168.1.10:80
+Apr 22 11:02:53 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:54 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:55884 to 192.168.1.10:80
+Apr 22 11:02:54 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:55 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:55 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:56 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:57 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:57 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:56274 to 192.168.1.10:80
+Apr 22 11:02:58 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:02:58 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:02:59 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:6527 to 192.168.1.10:80
+Apr 22 11:03:00 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:00 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:01 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:39070 to 192.168.1.10:80
+Apr 22 11:03:01 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:02 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:03 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:03 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:04 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:04 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:05 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:06 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:06 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:07 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:59601 to 192.168.1.10:80
+Apr 22 11:03:07 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:08 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:09 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:09 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:10 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:10 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:42235 to 192.168.1.10:80
+Apr 22 11:03:11 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:12 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:12 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:13 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:13 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:14 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:1571 to 192.168.1.10:80
+Apr 22 11:03:15 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:15 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:27250 to 192.168.1.10:80
+Apr 22 11:03:16 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:16 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:35316 to 192.168.1.10:80
+Apr 22 11:03:17 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:7893 to 192.168.1.10:80
+Apr 22 11:03:18 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:18 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:19 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:19 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:20 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:21 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:21 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:22 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:22 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:23 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:24471 to 192.168.1.10:80
+Apr 22 11:03:24 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:24 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:25 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:25 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:38086 to 192.168.1.10:80
+Apr 22 11:03:26 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:27 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:27 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:28 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:28 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:29 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:38751 to 192.168.1.10:80
+Apr 22 11:03:30 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:30 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:31 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:49830 to 192.168.1.10:80
+Apr 22 11:03:31 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:2839 to 192.168.1.10:80
+Apr 22 11:03:32 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:33 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:23570 to 192.168.1.10:80
+Apr 22 11:03:33 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:34 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:48276 to 192.168.1.10:80
+Apr 22 11:03:34 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:46835 to 192.168.1.10:80
+Apr 22 11:03:35 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:58582 to 192.168.1.10:80
+Apr 22 11:03:36 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:49857 to 192.168.1.10:80
+Apr 22 11:03:36 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:39800 to 192.168.1.10:80
+Apr 22 11:03:37 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:37 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:38 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:52731 to 192.168.1.10:80
+Apr 22 11:03:39 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:39 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:60797 to 192.168.1.10:80
+Apr 22 11:03:40 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:40 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:41 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:1447 to 192.168.1.10:80
+Apr 22 11:03:42 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:32833 to 192.168.1.10:80
+Apr 22 11:03:42 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:43 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:43 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:44 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:53518 to 192.168.1.10:80
+Apr 22 11:03:45 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:43074 to 192.168.1.10:80
+Apr 22 11:03:45 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:62457 to 192.168.1.10:80
+Apr 22 11:03:46 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:46 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:5226 to 192.168.1.10:80
+Apr 22 11:03:47 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:48 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:48 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:49 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:48207 to 192.168.1.10:80
+Apr 22 11:03:49 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:1650 to 192.168.1.10:80
+Apr 22 11:03:50 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:61444 to 192.168.1.10:80
+Apr 22 11:03:51 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:51 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:52 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:52 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:33090 to 192.168.1.10:80
+Apr 22 11:03:53 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:54 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:18790 to 192.168.1.10:80
+Apr 22 11:03:54 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:55 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:55 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:56 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:57 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:03:57 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:58 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:03:58 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:18897 to 192.168.1.10:80
+Apr 22 11:03:59 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:62877 to 192.168.1.10:80
+Apr 22 11:04:00 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:00 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:28144 to 192.168.1.10:80
+Apr 22 11:04:01 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:01 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:29696 to 192.168.1.10:80
+Apr 22 11:04:02 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:03 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:03 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:21655 to 192.168.1.10:80
+Apr 22 11:04:04 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:51379 to 192.168.1.10:80
+Apr 22 11:04:04 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:46459 to 192.168.1.10:80
+Apr 22 11:04:05 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:06 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:06 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:27861 to 192.168.1.10:80
+Apr 22 11:04:07 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:64131 to 192.168.1.10:80
+Apr 22 11:04:07 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:08 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:45269 to 192.168.1.10:80
+Apr 22 11:04:09 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:18907 to 192.168.1.10:80
+Apr 22 11:04:09 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:10 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:7315 to 192.168.1.10:80
+Apr 22 11:04:10 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:11 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:12 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:12 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:13 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:48866 to 192.168.1.10:80
+Apr 22 11:04:13 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:45084 to 192.168.1.10:80
+Apr 22 11:04:14 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:15 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:15 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:16 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:16 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:17 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:15366 to 192.168.1.10:80
+Apr 22 11:04:18 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:18 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:15629 to 192.168.1.10:80
+Apr 22 11:04:19 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:44948 to 192.168.1.10:80
+Apr 22 11:04:19 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:20 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:21 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:21 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:22 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:22 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:23 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:30766 to 192.168.1.10:80
+Apr 22 11:04:24 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:24 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:25 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:29188 to 192.168.1.10:80
+Apr 22 11:04:25 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:26 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:27 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:27 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:41963 to 192.168.1.10:80
+Apr 22 11:04:28 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:17892 to 192.168.1.10:80
+Apr 22 11:04:28 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:29 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:4053 to 192.168.1.10:80
+Apr 22 11:04:30 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:30 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:31 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:3697 to 192.168.1.10:80
+Apr 22 11:04:31 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:41518 to 192.168.1.10:80
+Apr 22 11:04:32 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:1833 to 192.168.1.10:80
+Apr 22 11:04:33 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:47749 to 192.168.1.10:80
+Apr 22 11:04:33 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:34 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:34 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:35 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:36 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:36 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:57042 to 192.168.1.10:80
+Apr 22 11:04:37 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:37 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:38 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:39 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:39 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:21222 to 192.168.1.10:80
+Apr 22 11:04:40 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:40 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:41 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:42 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:42 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:60683 to 192.168.1.10:80
+Apr 22 11:04:43 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:43 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:44 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:45 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:64614 to 192.168.1.10:80
+Apr 22 11:04:45 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:46 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:46 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:6622 to 192.168.1.10:80
+Apr 22 11:04:47 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:48 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:48 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:49 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:49 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:54571 to 192.168.1.10:80
+Apr 22 11:04:50 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:36721 to 192.168.1.10:80
+Apr 22 11:04:51 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:51 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:52 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:59716 to 192.168.1.10:80
+Apr 22 11:04:52 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:53 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:54 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:54 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:55 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:45615 to 192.168.1.10:80
+Apr 22 11:04:55 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:56 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:57 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:57 localhost nginx[TACTIC:T1498]: HTTP request from 185.220.101.45 to 192.168.1.10: GET /index.html
+Apr 22 11:04:58 localhost nginx[TACTIC:T1498]: TCP connection from 185.220.101.45:61839 to 192.168.1.10:80
+Apr 22 11:04:58 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:04:59 localhost nginx[TACTIC:T1498]: SYN flood from 185.220.101.45 to 192.168.1.10:80
+Apr 22 11:05:00 localhost nginx[TACTIC:T1498]: ALERT: High traffic from 5 sources - possible DDoS
+Apr 22 11:30:00 localhost ARP[TACTIC:T1040]: ARP spoofing detected: 185.220.101.45 claims 192.168.1.1
+Apr 22 11:30:05 localhost dhcpd[TACTIC:T1040]: DHCP spoofing: fake DHCP server at 185.220.101.45
+Apr 22 11:30:10 localhost sshd[TACTIC:T1040]: WARNING: Host key verification failed for 192.168.1.25
+Apr 22 11:30:15 localhost sshd[TACTIC:T1040]: Man-in-the-middle attack detected: 185.220.101.45 -> 192.168.1.25
+Apr 22 11:30:20 localhost system[TACTIC:T1040]: DNS poisoning attempt from 185.220.101.45
+Apr 22 11:30:25 localhost ssl[TACTIC:T1040]: SSL certificate mismatch for 192.168.1.25
+Apr 22 11:30:30 localhost network[TACTIC:T1040]: Traffic redirected through 185.220.101.45
+Apr 22 11:30:35 localhost firewall[TACTIC:T1040]: Suspicious ARP replies from 185.220.101.45
+Apr 22 11:30:40 localhost auth[TACTIC:T1040]: Credential capture suspected: 192.168.1.25
+Apr 22 11:30:45 localhost alert[TACTIC:T1557]: MITM ATTACK IN PROGRESS: 192.168.1.25 compromised
+Apr 22 12:00:00 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:841 from 91.121.87.200
+Apr 22 12:00:02 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:51 from 91.121.87.200
+Apr 22 12:00:04 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:575 from 91.121.87.200
+Apr 22 12:00:06 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:997 from 91.121.87.200
+Apr 22 12:00:08 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:61 from 91.121.87.200
+Apr 22 12:00:10 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:393 from 91.121.87.200
+Apr 22 12:00:12 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:738 from 91.121.87.200
+Apr 22 12:00:14 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:706 from 91.121.87.200
+Apr 22 12:00:16 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:217 from 91.121.87.200
+Apr 22 12:00:18 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:840 from 91.121.87.200
+Apr 22 12:00:20 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:734 from 91.121.87.200
+Apr 22 12:00:22 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:236 from 91.121.87.200
+Apr 22 12:00:24 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:313 from 91.121.87.200
+Apr 22 12:00:26 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:213 from 91.121.87.200
+Apr 22 12:00:28 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:458 from 91.121.87.200
+Apr 22 12:00:30 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:483 from 91.121.87.200
+Apr 22 12:00:32 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:194 from 91.121.87.200
+Apr 22 12:00:34 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:127 from 91.121.87.200
+Apr 22 12:00:36 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:81 from 91.121.87.200
+Apr 22 12:00:38 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:85 from 91.121.87.200
+Apr 22 12:00:40 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:466 from 91.121.87.200
+Apr 22 12:00:42 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:560 from 91.121.87.200
+Apr 22 12:00:44 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:617 from 91.121.87.200
+Apr 22 12:00:46 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:7 from 91.121.87.200
+Apr 22 12:00:48 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:998 from 91.121.87.200
+Apr 22 12:00:50 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:231 from 91.121.87.200
+Apr 22 12:00:52 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:273 from 91.121.87.200
+Apr 22 12:00:54 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:812 from 91.121.87.200
+Apr 22 12:00:56 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:210 from 91.121.87.200
+Apr 22 12:00:58 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:442 from 91.121.87.200
+Apr 22 12:01:00 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:554 from 91.121.87.200
+Apr 22 12:01:02 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:215 from 91.121.87.200
+Apr 22 12:01:04 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:813 from 91.121.87.200
+Apr 22 12:01:06 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:240 from 91.121.87.200
+Apr 22 12:01:08 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:37 from 91.121.87.200
+Apr 22 12:01:10 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:153 from 91.121.87.200
+Apr 22 12:01:12 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:230 from 91.121.87.200
+Apr 22 12:01:14 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:134 from 91.121.87.200
+Apr 22 12:01:16 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:140 from 91.121.87.200
+Apr 22 12:01:18 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:238 from 91.121.87.200
+Apr 22 12:01:20 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:519 from 91.121.87.200
+Apr 22 12:01:22 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:388 from 91.121.87.200
+Apr 22 12:01:24 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:255 from 91.121.87.200
+Apr 22 12:01:26 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:161 from 91.121.87.200
+Apr 22 12:01:28 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:894 from 91.121.87.200
+Apr 22 12:01:30 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:1013 from 91.121.87.200
+Apr 22 12:01:32 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:779 from 91.121.87.200
+Apr 22 12:01:34 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:704 from 91.121.87.200
+Apr 22 12:01:36 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:961 from 91.121.87.200
+Apr 22 12:01:38 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:437 from 91.121.87.200
+Apr 22 12:01:40 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:207 from 91.121.87.200
+Apr 22 12:01:42 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:780 from 91.121.87.200
+Apr 22 12:01:44 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:354 from 91.121.87.200
+Apr 22 12:01:46 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:408 from 91.121.87.200
+Apr 22 12:01:48 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:720 from 91.121.87.200
+Apr 22 12:01:50 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:491 from 91.121.87.200
+Apr 22 12:01:52 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:689 from 91.121.87.200
+Apr 22 12:01:54 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:286 from 91.121.87.200
+Apr 22 12:01:56 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:653 from 91.121.87.200
+Apr 22 12:01:58 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:574 from 91.121.87.200
+Apr 22 12:02:00 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:901 from 91.121.87.200
+Apr 22 12:02:02 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:399 from 91.121.87.200
+Apr 22 12:02:04 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:176 from 91.121.87.200
+Apr 22 12:02:06 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:652 from 91.121.87.200
+Apr 22 12:02:08 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:596 from 91.121.87.200
+Apr 22 12:02:10 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:204 from 91.121.87.200
+Apr 22 12:02:12 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:910 from 91.121.87.200
+Apr 22 12:02:14 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:1012 from 91.121.87.200
+Apr 22 12:02:16 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:162 from 91.121.87.200
+Apr 22 12:02:18 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:951 from 91.121.87.200
+Apr 22 12:02:20 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:473 from 91.121.87.200
+Apr 22 12:02:22 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:314 from 91.121.87.200
+Apr 22 12:02:24 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:717 from 91.121.87.200
+Apr 22 12:02:26 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:685 from 91.121.87.200
+Apr 22 12:02:28 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:470 from 91.121.87.200
+Apr 22 12:02:30 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:117 from 91.121.87.200
+Apr 22 12:02:32 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:834 from 91.121.87.200
+Apr 22 12:02:34 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:593 from 91.121.87.200
+Apr 22 12:02:36 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:871 from 91.121.87.200
+Apr 22 12:02:38 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:582 from 91.121.87.200
+Apr 22 12:02:40 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:930 from 91.121.87.200
+Apr 22 12:02:42 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:692 from 91.121.87.200
+Apr 22 12:02:44 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:424 from 91.121.87.200
+Apr 22 12:02:46 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:537 from 91.121.87.200
+Apr 22 12:02:48 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:962 from 91.121.87.200
+Apr 22 12:02:50 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:735 from 91.121.87.200
+Apr 22 12:02:52 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:328 from 91.121.87.200
+Apr 22 12:02:54 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:351 from 91.121.87.200
+Apr 22 12:02:56 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:883 from 91.121.87.200
+Apr 22 12:02:58 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:946 from 91.121.87.200
+Apr 22 12:03:00 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:967 from 91.121.87.200
+Apr 22 12:03:02 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:561 from 91.121.87.200
+Apr 22 12:03:04 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:235 from 91.121.87.200
+Apr 22 12:03:06 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:657 from 91.121.87.200
+Apr 22 12:03:08 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:627 from 91.121.87.200
+Apr 22 12:03:10 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:843 from 91.121.87.200
+Apr 22 12:03:12 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:253 from 91.121.87.200
+Apr 22 12:03:14 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:104 from 91.121.87.200
+Apr 22 12:03:16 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:851 from 91.121.87.200
+Apr 22 12:03:18 localhost kernel[TACTIC:T1046]: Connection attempt to 192.168.1.10:837 from 91.121.87.200
+Apr 22 12:03:20 localhost firewall[TACTIC:T1046]: Port scan detected from 91.121.87.200 to 192.168.1.10
+Apr 22 12:30:00 localhost sshd[TACTIC:T1078]: Failed password for developer from 45.33.32.156 port 63428 ssh2
+Apr 22 12:30:03 localhost sshd[TACTIC:T1078]: Failed password for deploy from 45.33.32.156 port 46377 ssh2
+Apr 22 12:30:06 localhost sshd[TACTIC:T1078]: Failed password for jsmith from 45.33.32.156 port 31266 ssh2
+Apr 22 12:30:09 localhost sshd[TACTIC:T1078]: Failed password for backup from 45.33.32.156 port 4762 ssh2
+Apr 22 12:30:12 localhost sshd[TACTIC:T1078]: Failed password for mwilson from 45.33.32.156 port 39708 ssh2
+Apr 22 12:30:15 localhost sshd[TACTIC:T1078]: Failed password for agarcia from 45.33.32.156 port 12101 ssh2
+Apr 22 12:30:18 localhost sshd[TACTIC:T1078]: Failed password for sysop from 45.33.32.156 port 24288 ssh2
+Apr 22 12:30:21 localhost sshd[TACTIC:T1078]: Failed password for admin from 45.33.32.156 port 1556 ssh2
+Apr 22 12:30:24 localhost sshd[TACTIC:T1078]: Failed password for root from 45.33.32.156 port 12023 ssh2
+Apr 22 12:30:27 localhost sshd[TACTIC:T1078]: Failed password for ubuntu from 45.33.32.156 port 50429 ssh2
+Apr 22 12:30:30 localhost sshd[TACTIC:T1078]: Multiple failed logins for various users from 45.33.32.156
+Apr 22 13:00:00 localhost system[TACTIC:T1105]: High CPU usage detected on system
+Apr 22 13:00:30 localhost process[TACTIC:T1059]: Suspicious process: powershell.exe encoding commands
+Apr 22 13:01:00 localhost network[TACTIC:T1105]: Unexpected outbound connection to 185.220.101.99
+Apr 22 13:01:30 localhost process[TACTIC:T1105]: Process injection detected: svchost.exe
+Apr 22 13:02:00 localhost file[TACTIC:T1105]: New executable in temp directory
+Apr 22 13:02:30 localhost network[TACTIC:T1105]: Data exfiltration attempt to 91.121.200.50
+Apr 22 13:03:00 localhost system[TACTIC:T1105]: Registry modification: Run key updated
+Apr 22 13:03:30 localhost security[TACTIC:T1059]: Malware indicators: 192.168.1.50 may be compromised
+Apr 22 13:30:00 localhost sudo[TACTIC:T1068]: sudo: agarcia : TTY=pts/0 ; PWD=/home/user ; USER=root ; COMMAND=/bin/bash
+Apr 22 13:30:10 localhost su[TACTIC:T1068]: su: (root) AUTHFAIL on '/dev/pts/0' for ubuntu from 77.45.123.89
+Apr 22 13:30:20 localhost chmod[TACTIC:T1068]: chmod: changing permissions of /etc/shadow to 0644
+Apr 22 13:30:30 localhost chown[TACTIC:T1068]: chown: ownership changed on /etc/passwd
+Apr 22 13:30:40 localhost system[TACTIC:T1068]: User agarcia added to group 'wheel'
+Apr 22 13:30:50 localhost sshd[TACTIC:T1068]: WARNING: privilege escalation attempt detected: 77.45.123.89 using sudo
+Apr 22 13:31:00 localhost system[TACTIC:T1068]: New sudoers entry created for backup
+Apr 22 13:31:10 localhost system[TACTIC:T1068]: Password reset for root account from 77.45.123.89
+Apr 22 13:31:20 localhost audit[TACTIC:T1068]: AUDIT: privilege escalation: user=sysop old_priv=user new_priv=root
+Apr 22 14:00:00 localhost smbd[TACTIC:T1021]: SMB session: user=jsmith from 192.168.1.50 to 192.168.1.10
+Apr 22 14:00:15 localhost winrm[TACTIC:T1021]: WinRM: remote command execution on 192.168.1.10 from 192.168.1.50
+Apr 22 14:00:30 localhost wmi[TACTIC:T1021]: WMI: provider lateral_movement from 192.168.1.50 user=administrator
+Apr 22 14:00:45 localhost smbd[TACTIC:T1021]: SMB session: user=admin from 192.168.1.10 to 192.168.1.20
+Apr 22 14:01:00 localhost rdp[TACTIC:T1021]: RDP connection established: 192.168.1.20 <- 192.168.1.50
+Apr 22 14:01:15 localhost psexec[TACTIC:T1021]: PSEXEC: service deployed on 192.168.1.20 from 192.168.1.50
+Apr 22 14:01:30 localhost smbd[TACTIC:T1021]: SMB session: user=root from 192.168.1.20 to 192.168.1.30
+Apr 22 14:01:45 localhost winrm[TACTIC:T1021]: WinRM: remote command executed as SYSTEM on 192.168.1.30
+Apr 22 14:02:00 localhost dcsync[TACTIC:T1021]: DCSync attack: domain replication from 192.168.1.40
+Apr 22 14:02:15 localhost alert[TACTIC:T1082]: LATERAL MOVEMENT DETECTED: chain 192.168.1.50 -> 192.168.1.10 -> 192.168.1.20 -> 192.168.1.30
+Apr 22 14:30:00 localhost system[TACTIC:T1048]: Large file access detected: /home/data/customers.db on 192.168.1.25
+Apr 22 14:30:15 localhost network[TACTIC:T1048]: Unusual outbound connection to 185.220.101.50 port 443
+Apr 22 14:30:30 localhost file[TACTIC:T1048]: File read: /etc/passwd (sensitive) by ubuntu
+Apr 22 14:30:45 localhost network[TACTIC:T1048]: Outbound connection to 91.121.200.100 on non-standard port 31337
+Apr 22 14:31:00 localhost system[TACTIC:T1048]: Database backup initiated: customers.db size=2.3GB
+Apr 22 14:31:15 localhost network[TACTIC:T1048]: FTP upload attempt to 45.33.32.200
+Apr 22 14:31:30 localhost file[TACTIC:T1048]: Archive created: backup_$(date +%Y%m%d).tar.gz in /tmp
+Apr 22 14:31:45 localhost system[TACTIC:T1048]: Archive upload to external host: 185.220.101.50 via HTTPS
+Apr 22 14:32:00 localhost dns[TACTIC:T1048]: DNS TXT query to exfil.jsmith.attacker.com - possible DNS exfil
+Apr 22 14:32:15 localhost alert[TACTIC:T1048]: DATA EXFILTRATION: 192.168.1.25 uploading to 185.220.101.50, 91.121.200.100

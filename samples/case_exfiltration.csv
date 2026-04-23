@@ -1,0 +1,11 @@
+timestamp,host,process,event_type,message,source_ip,destination_ip,user
+Apr 22 08:00:00,localhost,system,suspicious,Large file access detected: /home/data/customers.db on 192.168.1.25,192.168.1.25,192.168.1.25,
+Apr 22 08:00:15,localhost,network,suspicious,Unusual outbound connection to 185.220.101.50 port 443,185.220.101.50,185.220.101.50,
+Apr 22 08:00:30,localhost,file,suspicious,File read: /etc/passwd (sensitive) by mwilson,,,
+Apr 22 08:00:45,localhost,network,suspicious,Outbound connection to 91.121.200.100 on non-standard port 31337,91.121.200.100,91.121.200.100,
+Apr 22 08:01:00,localhost,system,suspicious,Database backup initiated: customers.db size=2.3GB,,,
+Apr 22 08:01:15,localhost,network,suspicious,FTP upload attempt to 45.33.32.200,45.33.32.200,45.33.32.200,
+Apr 22 08:01:30,localhost,file,suspicious,Archive created: backup_$(date +%Y%m%d).tar.gz in /tmp,,,
+Apr 22 08:01:45,localhost,system,suspicious,Archive upload to external host: 185.220.101.50 via HTTPS,185.220.101.50,185.220.101.50,
+Apr 22 08:02:00,localhost,dns,exfil,DNS TXT query to exfil.root.attacker.com - possible DNS exfil,,,
+Apr 22 08:02:15,localhost,alert,exfil_alert,"DATA EXFILTRATION: 192.168.1.25 uploading to 185.220.101.50, 91.121.200.100",192.168.1.25,91.121.200.100,

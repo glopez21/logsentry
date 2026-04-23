@@ -1,0 +1,10 @@
+timestamp,host,process,event_type,message,source_ip,destination_ip,user
+Apr 22 08:00:00,localhost,sudo,suspicious,sudo: sysop : TTY=pts/0 ; PWD=/home/user ; USER=root ; COMMAND=/bin/bash,,,;
+Apr 22 08:00:10,localhost,su,suspicious,su: (root) AUTHFAIL on '/dev/pts/0' for ubuntu from 45.33.32.156,45.33.32.156,45.33.32.156,ubuntu
+Apr 22 08:00:20,localhost,chmod,suspicious,chmod: changing permissions of /etc/shadow to 0644,,,
+Apr 22 08:00:30,localhost,chown,suspicious,chown: ownership changed on /etc/passwd,,,
+Apr 22 08:00:40,localhost,system,suspicious,User agarcia added to group 'wheel',,,
+Apr 22 08:00:50,localhost,sshd,priv_esc,WARNING: privilege escalation attempt detected: 45.33.32.156 using sudo,45.33.32.156,45.33.32.156,
+Apr 22 08:01:00,localhost,system,suspicious,New sudoers entry created for root,,,
+Apr 22 08:01:10,localhost,system,suspicious,Password reset for root account from 45.33.32.156,45.33.32.156,45.33.32.156,
+Apr 22 08:01:20,localhost,audit,priv_esc_alert,AUDIT: privilege escalation: user=agarcia old_priv=user new_priv=root,,,agarcia
