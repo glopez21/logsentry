@@ -191,3 +191,26 @@ logsentry/
 - rich
 
 Managed via `uv` - see `pyproject.toml` for version pins.
+
+---
+
+## Portfolio Description
+
+**SOC analyst log analysis toolkit for hands-on skill development**
+
+I built LogSentry to practice analyzing security logs and develop detection skills in a structured way. It generates realistic attack scenarios that mirror what SOC analysts encounter daily, helping me build pattern recognition and triage speed.
+
+**What it demonstrates:**
+- **Log analysis proficiency** - I can parse and interpret multiple log formats (syslog, SSH, PAM, CloudTrail)
+- **Detection heuristic design** - I understand how to write detection logic for common attack patterns
+- **MITRE ATT&CK framework** - I can map events to attack techniques and understand attacker behavior
+- **Tool building for learning** - I create my own practice tools rather than relying solely on labs
+
+**Conversation starter for interviews:**
+> "I built LogSentry to practice log analysis and develop detection skills. Rather than just reading about brute force or lateral movement, I generated realistic log data for these scenarios to build pattern recognition. The MITRE ATT&CK tagging helped me understand the full attack lifecycle, not just individual events."
+
+**Technical details I can discuss:**
+- How log parsing works (regex, field extraction)
+- Why detection heuristics need tuning for false positives
+- The difference between correlated events and individual alerts
+- How to translate attack techniques into detection logic
