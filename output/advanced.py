@@ -6,6 +6,33 @@ from datetime import datetime
 from typing import Any
 
 
+def enrich_ip(ip: str) -> dict:
+    """Enrich IP with threat intelligence. Uses real APIs if configured, falls back to local data."""
+    try:
+        from threat_intel import enrich_ip as real_enrich_ip
+        result = real_enrich_ip(ip)
+        return result
+    except ImportError:
+        pass
+    
+    result = {
+        "ip": ip,
+        "type": "unknown",
+        "severity": "info",
+        "reputation": "unknown"
+    }
+    
+    if not ip:
+        return result
+    
+    for prefix, data in THREAT_INTEL.items():
+        if ip.startswith(prefix):
+            result.update(data)
+            break
+    
+    return result
+
+
 SEVERITY_MAP = {
     "critical": [
         "priv_esc", "Privilege escalation", "lateral_movement detected", "data_exfiltration",
@@ -84,26 +111,6 @@ def generate_timeline(records: list[dict]) -> list[dict]:
         })
     
     return sorted(timeline, key=lambda x: x["timestamp"])
-
-
-def enrich_ip(ip: str) -> dict:
-    """Enrich IP with threat intelligence."""
-    result = {
-        "ip": ip,
-        "type": "unknown",
-        "severity": "info",
-        "reputation": "unknown"
-    }
-    
-    if not ip:
-        return result
-    
-    for prefix, data in THREAT_INTEL.items():
-        if ip.startswith(prefix):
-            result.update(data)
-            break
-    
-    return result
 
 
 def correlate_events(records: list[dict]) -> dict:

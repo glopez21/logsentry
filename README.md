@@ -22,6 +22,11 @@ I built LogSentry to practice analyzing security logs and develop detection skil
 - **Scenario Generator** - Creates realistic attack scenarios for practice
 - **Real-time Collection** - Watch log files or listen for syslog in real-time
 - **MITRE ATT&CK** - All scenarios tagged with techniques
+- **Threat Intelligence** - Real-time IP enrichment via VirusTotal, AbuseIPDB, AlienVault OTX, and Shodan APIs
+- **Rule Engine** - Custom detection rules with YAML/JSON support and pattern matching
+- **Anomaly Detection** - Statistical analysis with baseline comparison and z-score detection
+- **SIEM Export** - Direct export to Elasticsearch, Splunk HEC, and Sumo Logic
+- **Dashboard** - ASCII visualization with attack chain mapping and charts
 
 ## Quick Start
 
@@ -102,12 +107,116 @@ uv run main.py ticket "Brute force detected" -s critical
 - Event correlation
 - **MITRE ATT&CK tactic mapping**
 
+## Threat Intelligence
+
+Real-time IP enrichment with multiple threat intelligence providers:
+
+```bash
+# Single IP lookup (all providers)
+uv run main.py lookup 185.220.101.45
+
+# Quick reputation check
+uv run main.py lookup 185.220.101.45 --check-only
+
+# Specific provider
+uv run main.py lookup 185.220.101.45 --provider vt
+
+# Enrich all IPs in log file
+uv run main.py case.log --enrich-all
+```
+
+**Supported Providers:**
+- **VirusTotal** - Detection ratios, tags
+- **AbuseIPDB** - Abuse scores, Tor/Proxy/VPN detection
+- **AlienVault OTX** - Pulse counts, threat categories
+- **Shodan** - Host info, ISP data
+
+**Setup (API keys via environment variables):**
+```bash
+export VT_API_KEY="your-key"
+export ABUSEIPDB_API_KEY="your-key"
+export OTX_API_KEY="your-key"
+export SHODAN_API_KEY="your-key"
+```
+
+## Rule Engine
+
+Custom detection rules with pattern matching:
+
+```bash
+# Run with built-in rules
+uv run main.py case.log --rules
+
+# With custom rules file
+uv run main.py case.log --rules custom_rules.yaml
+```
+
+## Anomaly Detection
+
+Statistical analysis with baseline comparison:
+
+```bash
+uv run main.py case.log --anomalies
+
+# Compare against baseline
+uv run main.py case.log --anomalies --baseline normal_day.log
+```
+
+## SIEM Export
+
+Export to security platforms:
+
+```bash
+uv run main.py case.log --siem es        # Elasticsearch
+uv run main.py case.log --siem splunk    # Splunk HEC
+uv run main.py case.log --siem sumo      # Sumo Logic
+```
+
+## Dashboard
+
+ASCII visualization dashboard:
+
+```bash
+uv run main.py case.log --dashboard
+```
+
+Displays: event timeline, severity distribution, top attackers, attack chain visualization.
+
 ## Project Structure
 
 ```
 logsentry/
 ├── main.py              # CLI entry point
+├── generate_logs.py     # Scenario generator
+├── threat_intel/        # Threat intelligence providers
+│   └── providers.py    # VT, AbuseIPDB, OTX, Shodan
+├── siem/               # SIEM export
+│   └── __init__.py    # Elasticsearch, Splunk, Sumo
+├── rules/              # Rule engine
+│   └── __init__.py    # Detection rules
+├── analytics/          # Anomaly detection
+│   └── __init__.py    # Statistical analysis
+├── dashboard/          # Visualization
+│   └── __init__.py    # ASCII charts
+├── collector/          # Real-time collection
+│   ├── file_tail.py   # File tail
+│   └── syslog.py      # UDP/TCP listener
+├── alerters/           # Alerting
+│   ├── console.py    # Console output
+│   └── ticket.py      # AlertFlow
+├── parsers/            # Log parsers
+│   ├── syslog_parser.py
+│   ├── ssh_parser.py
+│   └── auth_parser.py
+├── detection/          # Detection heuristics
+├── output/             # Output formatters
+└── samples/            # Sample data
+logsentry/
+├── main.py              # CLI entry point
 ├── generate_logs.py    # Scenario generator
+├── threat_intel/        # Threat intelligence providers
+│   ├── __init__.py
+│   └── providers.py    # VT, AbuseIPDB, OTX, Shodan
 ├── collector/           # Real-time collection
 │   ├── __init__.py
 │   ├── file_tail.py    # File tail implementation
