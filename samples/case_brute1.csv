@@ -1,0 +1,52 @@
+timestamp,host,process,event_type,message,source_ip,destination_ip,user,mitre_tactic,mitre_technique
+Apr 22 08:00:00,localhost,sshd,ssh_invalid_user,Invalid user root from 45.33.32.156 port 25152 ssh2,45.33.32.156,45.33.32.156,root,T1110,Initial Access
+Apr 22 08:00:12,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 14149 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:00:24,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 59540 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:00:36,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 7740 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:00:48,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 62092 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:01:00,localhost,sshd,ssh_invalid_user,Invalid user deploy from 45.33.32.156 port 54872 ssh2,45.33.32.156,45.33.32.156,deploy,T1110,Initial Access
+Apr 22 08:01:12,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 31305 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:01:24,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 16509 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:01:36,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 41536 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:01:48,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 62771 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:02:00,localhost,sshd,ssh_invalid_user,Invalid user deploy from 45.33.32.156 port 13493 ssh2,45.33.32.156,45.33.32.156,deploy,T1110,Initial Access
+Apr 22 08:02:12,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 22263 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:02:24,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 64507 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:02:36,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 7644 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:02:48,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 41100 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:03:00,localhost,sshd,ssh_invalid_user,Invalid user developer from 45.33.32.156 port 37161 ssh2,45.33.32.156,45.33.32.156,developer,T1110,Initial Access
+Apr 22 08:03:12,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 60817 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:03:24,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 6675 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:03:36,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 5795 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:03:48,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 15678 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:04:00,localhost,sshd,ssh_invalid_user,Invalid user deploy from 45.33.32.156 port 35062 ssh2,45.33.32.156,45.33.32.156,deploy,T1110,Initial Access
+Apr 22 08:04:12,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 19822 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:04:24,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 6519 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:04:36,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 37237 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:04:48,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 22708 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:05:00,localhost,sshd,ssh_invalid_user,Invalid user developer from 45.33.32.156 port 29871 ssh2,45.33.32.156,45.33.32.156,developer,T1110,Initial Access
+Apr 22 08:05:12,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 61959 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:05:24,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 45565 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:05:36,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 32511 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:05:48,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 13419 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:06:00,localhost,sshd,ssh_invalid_user,Invalid user developer from 45.33.32.156 port 46232 ssh2,45.33.32.156,45.33.32.156,developer,T1110,Initial Access
+Apr 22 08:06:12,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 60288 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:06:24,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 14906 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:06:36,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 3929 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:06:48,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 8365 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:07:00,localhost,sshd,ssh_invalid_user,Invalid user developer from 45.33.32.156 port 17551 ssh2,45.33.32.156,45.33.32.156,developer,T1110,Initial Access
+Apr 22 08:07:12,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 48002 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:07:24,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 4412 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:07:36,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 15716 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:07:48,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 63898 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:08:00,localhost,sshd,ssh_invalid_user,Invalid user developer from 45.33.32.156 port 57207 ssh2,45.33.32.156,45.33.32.156,developer,T1110,Initial Access
+Apr 22 08:08:12,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 19207 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:08:24,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 38541 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:08:36,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 38643 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:08:48,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 46570 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:09:00,localhost,sshd,ssh_invalid_user,Invalid user admin from 45.33.32.156 port 22084 ssh2,45.33.32.156,45.33.32.156,admin,T1110,Initial Access
+Apr 22 08:09:12,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 34752 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:09:24,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 7428 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:09:36,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 27853 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:09:48,localhost,sshd,ssh_login_fail,Failed password for admin from 45.33.32.156 port 26586 ssh2,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
+Apr 22 08:10:00,localhost,sshd,ssh_max_attempts,Maximum authentication attempts exceeded for admin from 45.33.32.156,45.33.32.156,45.33.32.156,admin,T1078,Valid Accounts
