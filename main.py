@@ -138,6 +138,13 @@ Examples:
     parse_parser.add_argument("--anomalies", action="store_true", help="Detect anomalies")
     parse_parser.add_argument("--siem", choices=["es", "splunk", "sumo"], help="Export to SIEM")
     parse_parser.add_argument("--baseline", metavar="FILE", help="Baseline file for anomaly detection")
+    parse_parser.add_argument("--yara", nargs="?", const=True, metavar="FILE", help="Scan with YARA rules")
+    parse_parser.add_argument("--suppress", action="store_true", help="Alert suppression")
+    parse_parser.add_argument("--navigator", metavar="FILE", help="Export to ATT&CK Navigator (JSON file)")
+    parse_parser.add_argument("--attack-timeline", action="store_true", help="Reconstruct attack timeline")
+    parse_parser.add_argument("--integrity", action="store_true", help="Verify log file integrity")
+    parse_parser.add_argument("--export-stix", metavar="FILE", help="Export to STIX bundle")
+    parse_parser.add_argument("--to-sigma", action="store_true", help="Convert to Sigma rules")
     
     # Watch command
     watch_parser = subparsers.add_parser("watch", help="Watch log file in real-time")
@@ -172,6 +179,27 @@ Examples:
     lookup_parser.add_argument("--json", action="store_true", help="JSON output")
     lookup_parser.add_argument("--check-only", action="store_true", help="Quick reputation check only")
     
+    # Diff command
+    diff_parser = subparsers.add_parser("diff", help="Compare two log files")
+    diff_parser.add_argument("file1", help="First log file")
+    diff_parser.add_argument("file2", help="Second log file")
+    
+    # Replay command
+    replay_parser = subparsers.add_parser("replay", help="Replay log file at compressed speed")
+    replay_parser.add_argument("file", help="Log file to replay")
+    replay_parser.add_argument("--speed", type=float, default=10.0, help="Speed multiplier")
+    replay_parser.add_argument("--limit", type=int, default=0, help="Limit events (0=all)")
+    
+    # Schedule command
+    schedule_parser = subparsers.add_parser("schedule", help="Run periodic monitoring")
+    schedule_parser.add_argument("--command", required=True, help="Command to run")
+    schedule_parser.add_argument("--interval", type=int, default=60, help="Interval in minutes")
+    
+    # Serve command
+    serve_parser = subparsers.add_parser("serve", help="Start REST API server")
+    serve_parser.add_argument("--host", default="0.0.0.0", help="Bind address")
+    serve_parser.add_argument("--port", type=int, default=8080, help="Port number")
+    
     # Parse arguments
     if len(sys.argv) > 1 and sys.argv[1] not in ["parse", "watch", "listen", "ticket", "lookup"]:
         # Default to parse command
@@ -189,6 +217,14 @@ Examples:
         run_ticket(args)
     elif args.command == "lookup":
         run_lookup(args)
+    elif args.command == "diff":
+        run_diff(args)
+    elif args.command == "replay":
+        run_replay(args)
+    elif args.command == "schedule":
+        run_schedule(args)
+    elif args.command == "serve":
+        run_serve(args)
     else:
         run_parse(args)
 
@@ -349,6 +385,178 @@ def run_parse(args):
                     print(f"  - {r}")
             else:
                 print(f"{check}: {result}")
+
+    if args.yara:
+        from yara_rules import scan_yara
+        rules_file = args.yara if isinstance(args.yara, str) else None
+        result = scan_yara(records, rules_file)
+        print("\nYARA Scan Results:")
+        print("="*50)
+        print(f"Matches: {result.get('total_matches', 0)}")
+        by_sev = result.get('by_severity', {})
+        for sev in ['critical', 'high', 'medium', 'low']:
+            if sev in by_sev:
+                print(f"  {sev.upper()}: {by_sev[sev]}")
+
+    if args.suppress:
+        from alerts import suppress_alerts as do_suppress
+        result = do_suppress(records)
+        print("\nAlert Suppression:")
+        print("="*50)
+        summary = result.get('summary', {})
+        print(f"Groups: {summary.get('total_groups', 0)}")
+        print(f"Suppressed: {summary.get('suppressed', 0)}")
+        print(f"Reduction: {summary.get('reduction_pct', 0):.1f}%")
+
+    if args.navigator:
+        from navigator import export_to_navigator, save_navigator_layer
+        result = export_to_navigator(records)
+        save_navigator_layer(result, args.navigator)
+        print(f"\nNavigator layer exported to: {args.navigator}")
+
+    if args.attack_timeline:
+        from attack_timeline import reconstruct_attack, format_attack_timeline
+        timeline = reconstruct_attack(records)
+        print(format_attack_timeline(timeline))
+
+    if args.integrity:
+        from integrity import compute_log_hash
+        result = compute_log_hash(logfile)
+        print("\nLog File Integrity:")
+        print("="*50)
+        print(f"Algorithm: {result.get('algorithm', 'sha256')}")
+        print(f"Hash: {result.get('hash', 'N/A')}")
+        print(f"Size: {result.get('size', 0)} bytes")
+
+    if args.export_stix:
+        from integrations.stix import export_to_stix, save_stix_bundle
+        result = export_to_stix(records)
+        save_stix_bundle(result['bundle'], args.export_stix)
+        print(f"\nSTIX bundle exported to: {args.export_stix}")
+
+    if args.to_sigma:
+        from integrations.sigma import convert_to_sigma, save_sigma_rules, SigmaRule
+        result = convert_to_sigma(records)
+        print(f"\nSigma Rules Generated: {result.get('rules_generated', 0)}")
+
+
+def run_diff(args):
+    """Compare two log files."""
+    records_a = parse_log_file(args.file1)
+    records_b = parse_log_file(args.file2)
+
+    ips_a = set(r.get("source_ip", "") for r in records_a if r.get("source_ip"))
+    ips_b = set(r.get("source_ip", "") for r in records_b if r.get("source_ip"))
+    users_a = set(r.get("user", "") for r in records_a if r.get("user"))
+    users_b = set(r.get("user", "") for r in records_b if r.get("user"))
+
+    print("\n" + "="*60)
+    print("LOG DIFF ANALYSIS")
+    print("="*60)
+    print(f"\nFile A: {args.file1} ({len(records_a)} events)")
+    print(f"File B: {args.file2} ({len(records_b)} events)")
+
+    new_ips = ips_b - ips_a
+    print("\n--- NEW SOURCE IPs (in B but not A) ---")
+    for ip in sorted(new_ips)[:20]:
+        print(f"  + {ip}")
+
+    removed_ips = ips_a - ips_b
+    print("\n--- REMOVED SOURCE IPs (in A but not B) ---")
+    for ip in sorted(removed_ips)[:20]:
+        print(f"  - {ip}")
+
+    new_users = users_b - users_a
+    print("\n--- NEW USERS ---")
+    for user in sorted(new_users)[:20]:
+        print(f"  + {user}")
+
+
+def run_replay(args):
+    """Replay log file at compressed speed."""
+    import time
+    records = parse_log_file(args.file)
+
+    if not records:
+        print("No records to replay")
+        return
+
+    print(f"[*] Replaying {args.file} at {args.speed}x speed")
+    delay = 1.0 / args.speed
+
+    for i, record in enumerate(records):
+        if args.limit and i >= args.limit:
+            break
+        ts = record.get("timestamp", "?")
+        event = record.get("event_type", "?")
+        msg = (record.get("raw_message", "") or record.get("message", ""))[:60]
+        print(f"[{ts}] [{event}] {msg}")
+        if i < len(records) - 1:
+            time.sleep(delay)
+
+    print(f"\n[*] Replayed {min(len(records), args.limit or len(records))} events")
+
+
+def run_schedule(args):
+    """Run periodic monitoring."""
+    import time as time_module
+    interval = args.interval / 60.0
+
+    print(f"[*] Scheduling: {args.command} every {args.interval} minutes")
+
+    while True:
+        from datetime import datetime
+        print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Running: {args.command}")
+        import subprocess
+        result = subprocess.run(args.command.split(), capture_output=True, text=True)
+        if result.returncode == 0:
+            print("  [OK]")
+        else:
+            print(f"  [ERROR] {result.stderr[:200]}")
+        time_module.sleep(interval * 60)
+
+
+def run_serve(args):
+    """Start REST API server."""
+    try:
+        from fastapi import FastAPI, UploadFile, File
+        from fastapi.responses import JSONResponse
+        import uvicorn
+    except ImportError:
+        print("Error: Install server deps with: uv sync --extra server")
+        sys.exit(1)
+
+    app = FastAPI(title="LogSentry API")
+
+    @app.post("/parse")
+    async def parse_logs(file: UploadFile = File(...)):
+        content = await file.read()
+        lines = content.decode("utf-8").splitlines()
+        records = []
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            detected = detect_format(line)
+            if detected:
+                parser = LOG_PARSERS.get(detected)
+                if parser:
+                    record = parser(line)
+                    if record:
+                        records.append(record)
+        return JSONResponse(content={"status": "success", "count": len(records)})
+
+    @app.get("/lookup/{ip}")
+    async def lookup_ip(ip: str):
+        from threat_intel import enrich_ip
+        return JSONResponse(content=enrich_ip(ip))
+
+    @app.get("/health")
+    async def health():
+        return {"status": "healthy", "service": "logSentry", "version": "0.2.0"}
+
+    print(f"[*] Starting API server on {args.host}:{args.port}")
+    uvicorn.run(app, host=args.host, port=args.port)
 
 
 def run_watch(args):

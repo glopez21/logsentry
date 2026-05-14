@@ -1,32 +1,30 @@
 # LogSentry
 
-A security log parsing toolkit for SOC analysts and incident responders. LogSentry parses and normalizes common security log formats (syslog, SSH authentication, PAM auth) into clean, analysis-ready data with built-in detection heuristics for faster triage.
-
-I built LogSentry to practice analyzing security logs and develop detection skills in a structured way. Rather than just reading about brute force or lateral movement, I generated realistic log data for these scenarios to build pattern recognition. The MITRE ATT&CK tagging helped me understand the full attack lifecycle, not just individual events.  It generates realistic attack scenarios that mirror what SOC analysts encounter daily, helping me build pattern recognition and triage speed.
-
-**What it demonstrates:**
-- **Log analysis proficiency** - I can parse and interpret multiple log formats (syslog, SSH, PAM, CloudTrail)
-- **Detection heuristic design** - I understand how to write detection logic for common attack patterns
-- **MITRE ATT&CK framework** - I can map events to attack techniques and understand attacker behavior
-- **Tool building for learning** - I create my own practice tools rather than relying solely on labs
-
-**Use Case:** This toolkit is designed for SOC analyst interview practice and training. It generates realistic security log scenarios with MITRE ATT&CK mapping, and provides real-time log collection for live security monitoring.
+A security log parsing toolkit for SOC analysts and incident responders. LogSentry parses and normalizes common security log formats (syslog, SSH authentication, PAM auth, CloudTrail) into clean, analysis-ready data with built-in detection heuristics for faster triage.
 
 ## Features
 
-- **Multi-format Support** - Auto-detects and parses syslog, SSH auth, and PAM authentication logs
-- **Field Extraction** - Extracts timestamp, host, user, source IP, and event type
-- **Detection Checks** - Built-in failed login burst detection, suspicious IP flagging, new account alerts
-- **Flexible Output** - Rich table display, CSV, or JSON export
-- **Triage Summary** - Generates concise summary for ticket documentation
-- **Scenario Generator** - Creates realistic attack scenarios for practice
+### Core Features
+- **Multi-format Support** - Auto-detects and parses syslog, SSH auth, PAM, and CloudTrail logs
+- **Detection Checks** - Built-in failed login burst detection, suspicious IP flagging, MITRE ATT&CK mapping
 - **Real-time Collection** - Watch log files or listen for syslog in real-time
-- **MITRE ATT&CK** - All scenarios tagged with techniques
-- **Threat Intelligence** - Real-time IP enrichment via VirusTotal, AbuseIPDB, AlienVault OTX, and Shodan APIs
-- **Rule Engine** - Custom detection rules with YAML/JSON support and pattern matching
-- **Anomaly Detection** - Statistical analysis with baseline comparison and z-score detection
-- **SIEM Export** - Direct export to Elasticsearch, Splunk HEC, and Sumo Logic
-- **Dashboard** - ASCII visualization with attack chain mapping and charts
+- **Threat Intelligence** - IP enrichment via VirusTotal, AbuseIPDB, OTX, and Shodan
+- **SIEM Export** - Export to Elasticsearch, Splunk HEC, and Sumo Logic
+
+### Advanced Features (v0.2+)
+- **Alert Suppression** - Reduce alert fatigue with intelligent grouping
+- **Attack Timeline** - Kill chain reconstruction from MITRE tactics
+- **MITRE Navigator Export** - Generate ATT&CK Navigator layer files
+- **YARA Rules** - YARA-style pattern matching engine
+- **Log Integrity** - Hash verification for forensic analysis
+- **Baseline Storage** - Persistent baselines for anomaly detection
+- **STIX/TAXII** - Threat intel feed integration
+
+### Integrations
+- **MISP** - Push IOCs to your Malware Information Sharing Platform
+- **TheHive** - Create cases for incident response workflow
+- **Sigma** - Convert detections to Sigma rule format
+- **REST API** - FastAPI server for programmatic access
 
 ## Quick Start
 
@@ -44,94 +42,81 @@ uv run main.py samples/sample_ssh_log.log --triage-summary
 uv run main.py samples/sample_ssh_log.log -o csv
 ```
 
-## Case Study Scenarios (SOC Practice)
+## CLI Commands
 
-Generate realistic attack scenarios for interview training:
+### Parse Commands
+```bash
+uv run main.py parse logfile.log                  # Basic parsing
+uv run main.py parse logfile.log --triage-summary # Triage summary
+uv run main.py parse logfile.log --severity       # Severity scoring
+uv run main.py parse logfile.log --mitre          # MITRE ATT&CK breakdown
+uv run main.py parse logfile.log --dashboard      # ASCII dashboard
+uv run main.py parse logfile.log --rules          # Rule engine
+uv run main.py parse logfile.log --anomalies      # Anomaly detection
+uv run main.py parse logfile.log --siem es        # SIEM export
+uv run main.py parse logfile.log --yara           # YARA scan
+uv run main.py parse logfile.log --suppress       # Alert suppression
+uv run main.py parse logfile.log --attack-timeline# Attack chain
+uv run main.py parse logfile.log --navigator out.json # Navigator export
+uv run main.py parse logfile.log --integrity     # Integrity check
+uv run main.py parse logfile.log --export-stix out.stix # STIX export
+uv run main.py parse logfile.log --to-sigma       # Sigma rules
+```
+
+### Real-Time Commands
+```bash
+uv run main.py watch /var/log/auth.log           # File watcher
+uv run main.py listen --port 514 --protocol udp  # Syslog listener
+```
+
+### Extended Commands
+```bash
+uv run main.py diff file1.log file2.log          # Compare logs
+uv run main.py replay logfile.log --speed 10     # Time-compressed replay
+uv run main.py schedule --command "python main.py watch auth.log" --interval 60
+uv run main.py serve --port 8080                 # REST API server
+```
+
+### Threat Intel
+```bash
+uv run main.py lookup 185.220.101.45             # IP lookup (all providers)
+uv run main.py lookup 185.220.101.45 --provider vt # Single provider
+uv run main.py lookup 185.220.101.45 --json      # JSON output
+uv run main.py lookup 185.220.101.45 --check-only # Quick check
+```
+
+## Scenario Generator
+
+Generate realistic attack scenarios for SOC training:
 
 ```bash
-# Generate a specific scenario as CSV
-uv run generate_logs.py -s brute -o case_brute_force.csv --output-format csv
+# Generate specific scenarios
+uv run generate_logs.py -s brute -o case_brute.csv --output-format csv
 uv run generate_logs.py -s lateral -o case_lateral.csv --output-format csv
 uv run generate_logs.py -s exfil -o case_exfil.csv --output-format csv
 
-# Generate all scenarios combined
+# Generate all scenarios
 uv run generate_logs.py -s all --seed 42 -o combined.log
+
+# Generate normal baseline
+uv run generate_logs.py -s normal --count 2000 -o normal_day.log
 ```
 
-| Scenario | Events | Description | MITRE Technique |
-|----------|--------|-------------|---------------|
-| `brute` | 50+ | Brute force password attack | T1110, T1078 |
-| `ddos` | 500+ | Distributed denial of service | T1498 |
-| `mitm` | 10 | Man-in-the-middle attack | T1557, T1040 |
-| `scan` | 100+ | Port scanning activity | T1046 |
-| `stuffing` | 10 | Credential stuffing | T1078 |
-| `malware` | 8 | Malware indicators | T1059, T1055, T1105 |
-| `priv_esc` | 9 | Privilege escalation | T1068, T1098 |
-| `lateral` | 10 | Lateral movement | T1021, T1047 |
-| `exfil` | 10 | Data exfiltration | T1048, T1041 |
+| Scenario | Events | MITRE |
+|----------|--------|-------|
+| `brute` | 50+ | T1110, T1078 |
+| `ddos` | 500+ | T1498 |
+| `mitm` | 10 | T1557, T1040 |
+| `scan` | 100+ | T1046 |
+| `stuffing` | 10 | T1078 |
+| `malware` | 8 | T1059, T1055 |
+| `priv_esc` | 9 | T1068, T1098 |
+| `lateral` | 10 | T1021, T1047 |
+| `exfil` | 10 | T1048, T1041 |
 
-## Real-Time Collection
+## Environment Variables
 
-```bash
-# Watch a log file in real-time (like tail -f)
-uv run main.py watch /var/log/auth.log
-
-# Watch and process existing lines first
-uv run main.py watch /var/log/auth.log --once
-
-# Listen for syslog messages (UDP)
-uv run main.py listen --port 514 --protocol udp
-
-# Listen on TCP
-uv run main.py listen --port 514 --protocol tcp
-
-# Create AlertFlow ticket
-uv run main.py ticket "Brute force detected" -s critical
-```
-## Supported Log Formats
-
-- **syslog** - Standard Linux syslog
-- **ssh** - OpenSSH authentication logs
-- **auth** - PAM/system authentication logs
-- **cloudtrail** - AWS CloudTrail JSON logs
-
-## Detection Features
-
-- Failed login burst detection (default: 5+ attempts)
-- Suspicious IP geography flagging (Tor exit nodes, known scanners)
-- New account creation alerts
-- Privilege escalation detection
-- Lateral movement detection
-- Data exfiltration detection
-- Severity scoring (critical/high/medium/low/info)
-- Event correlation
-- **MITRE ATT&CK tactic mapping**
-
-## Threat Intelligence
-
-Real-time IP enrichment with multiple threat intelligence providers:
-
-```bash
-# Single IP lookup (all providers)
-uv run main.py lookup 185.220.101.45
-
-# Quick reputation check
-uv run main.py lookup 185.220.101.45 --check-only
-
-# Specific provider
-uv run main.py lookup 185.220.101.45 --provider vt
-
-# Enrich all IPs in log file
-uv run main.py case.log --enrich-all
-```
-
-**Supported Providers:**
-- **VirusTotal** - Detection ratios, tags
-- **AbuseIPDB** - Abuse scores, Tor/Proxy/VPN detection
-- **AlienVault OTX** - Pulse counts, threat categories
-- **Shodan** - Host info, ISP data
-
-**Setup (API keys via environment variables):**
+### Threat Intel
 ```bash
 export VT_API_KEY="your-key"
 export ABUSEIPDB_API_KEY="your-key"
@@ -139,111 +124,82 @@ export OTX_API_KEY="your-key"
 export SHODAN_API_KEY="your-key"
 ```
 
-## Rule Engine
-
-Custom detection rules with pattern matching:
-
+### SIEM Export
 ```bash
-# Run with built-in rules
-uv run main.py case.log --rules
-
-# With custom rules file
-uv run main.py case.log --rules custom_rules.yaml
+export ES_ENDPOINT="http://localhost:9200"
+export ES_API_KEY="your-key"
+export SPLUNK_ENDPOINT="https://localhost:8088/services/collector"
+export SPLUNK_HEC_TOKEN="your-token"
+export SUMO_ENDPOINT="https://endpoint.sumologic.com/..."
+export SUMO_API_KEY="your-key"
 ```
 
-## Anomaly Detection
-
-Statistical analysis with baseline comparison:
-
+### Integrations
 ```bash
-uv run main.py case.log --anomalies
-
-# Compare against baseline
-uv run main.py case.log --anomalies --baseline normal_day.log
+export MISP_URL="https://your-misp.com"
+export MISP_API_KEY="your-key"
+export THEHIVE_URL="https://your-thehive.com"
+export THEHIVE_API_KEY="your-key"
+export TAXII_SERVER="https://taxii.example.com"
+export TAXII_COLLECTION="collection-id"
 ```
-
-## SIEM Export
-
-Export to security platforms:
-
-```bash
-uv run main.py case.log --siem es        # Elasticsearch
-uv run main.py case.log --siem splunk    # Splunk HEC
-uv run main.py case.log --siem sumo      # Sumo Logic
-```
-
-## Dashboard
-
-ASCII visualization dashboard:
-
-```bash
-uv run main.py case.log --dashboard
-```
-
-Displays: event timeline, severity distribution, top attackers, attack chain visualization.
 
 ## Project Structure
 
 ```
 logsentry/
 ├── main.py              # CLI entry point
-├── generate_logs.py     # Scenario generator
-├── threat_intel/        # Threat intelligence providers
-│   └── providers.py    # VT, AbuseIPDB, OTX, Shodan
+├── generate_logs.py      # Scenario generator
+├── _constants.py        # Pre-compiled patterns
+├── parsers/             # Log format parsers
+│   ├── syslog_parser.py
+│   ├── ssh_parser.py
+│   ├── auth_parser.py
+│   └── cloudtrail_parser.py
+├── detection/           # Detection heuristics
+├── output/              # Output formatters
+├── threat_intel/       # Threat intelligence
 ├── siem/               # SIEM export
-│   └── __init__.py    # Elasticsearch, Splunk, Sumo
 ├── rules/              # Rule engine
-│   └── __init__.py    # Detection rules
 ├── analytics/          # Anomaly detection
-│   └── __init__.py    # Statistical analysis
-├── dashboard/          # Visualization
-│   └── __init__.py    # ASCII charts
+├── dashboard/          # ASCII visualization
 ├── collector/          # Real-time collection
-│   ├── file_tail.py   # File tail
-│   └── syslog.py      # UDP/TCP listener
 ├── alerters/           # Alerting
-│   ├── console.py    # Console output
-│   └── ticket.py      # AlertFlow
-├── parsers/            # Log parsers
-│   ├── syslog_parser.py
-│   ├── ssh_parser.py
-│   └── auth_parser.py
-├── detection/          # Detection heuristics
-├── output/             # Output formatters
+├── alerts/            # Alert suppression
+├── attack_timeline/    # Kill chain reconstruction
+├── navigator/          # ATT&CK Navigator export
+├── yara_rules/         # YARA-style rules
+├── integrity/          # Log integrity
+├── baselines/          # Baseline storage
+├── integrations/       # External integrations
+│   ├── misp.py
+│   ├── thehive.py
+│   ├── sigma.py
+│   └── stix.py
+├── tests/              # Test suite
 └── samples/            # Sample data
-logsentry/
-├── main.py              # CLI entry point
-├── generate_logs.py    # Scenario generator
-├── threat_intel/        # Threat intelligence providers
-│   ├── __init__.py
-│   └── providers.py    # VT, AbuseIPDB, OTX, Shodan
-├── collector/           # Real-time collection
-│   ├── __init__.py
-│   ├── file_tail.py    # File tail implementation
-│   └── syslog.py      # UDP/TCP listener
-├── alerters/           # Alerting
-│   ├── __init__.py
-│   ├── console.py     # Console output
-│   └── ticket.py      # AlertFlow integration
-├── parsers/            # Log format parsers
-│   ├── syslog_parser.py
-│   ├── ssh_parser.py
-│   └── auth_parser.py
-├── detection/          # Detection heuristics
-│   └── detection_checks.py
-├── output/             # Output formatters
-│   ├── formatter.py
-│   └── advanced.py
-└── samples/           # Sample case study files
 ```
 
 ## Requirements
 
 - Python 3.11+
-- pandas
-- rich
+- pandas>=3.0.2
+- rich>=15.0.0
+- httpx>=0.27.0
 
-Managed via `uv` - see `pyproject.toml` for version pins.
+Optional dependencies:
+```bash
+uv sync --extra server    # For REST API
+uv sync --extra dev       # For testing (pytest, ruff, mypy)
+uv sync --extra integrations # For STIX
+```
+
+## Documentation
+
+- [README](README.md) - Overview and quick start
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Technical architecture
+- [CHANGELOG.md](CHANGELOG.md) - Version history
 
 ---
 
+*LogSentry - Build detection skills through practice.*

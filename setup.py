@@ -1,29 +1,24 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "logsentry"
 version = "0.2.0"
 description = "Security log parsing toolkit for SOC analysts"
 readme = "README.md"
-license = "MIT"
+license = {text = "MIT"}
 requires-python = ">=3.11"
 authors = [
-    { name = "w01f", email = "" }
+    {name = "w01f"}
 ]
-keywords = ["security", "soc", "log-analysis", "siem", "mitre-attack", "threat-intel"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: System Administrators",
-    "Intended Audience :: Information Technology",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Security",
-    "Topic :: System :: Logging",
 ]
 dependencies = [
     "pandas>=3.0.2",
@@ -33,8 +28,8 @@ dependencies = [
 
 [project.optional-dependencies]
 server = ["fastapi>=0.100", "uvicorn>=0.23"]
-dev = ["pytest>=8.0", "ruff>=0.5", "mypy>=1.0", "pytest-cov"]
-integrations = ["stix2>=3.0"]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+all = ["fastapi", "uvicorn", "pytest", "ruff", "mypy", "stix2"]
 
 [project.scripts]
 logsentry = "main:main"
@@ -42,14 +37,7 @@ logsentry = "main:main"
 [project.urls]
 Homepage = "https://github.com/w01f/logsentry"
 Repository = "https://github.com/w01f/logsentry"
-Documentation = "https://github.com/w01f/logsentry#readme"
 
-[tool.hatch.build.targets.sdist]
-include = [
-    "/README.md",
-    "/ARCHITECTURE.md",
-    "/CHANGELOG.md",
-]
-
-[tool.hatch.build.targets.wheel]
-packages = ["logsentry"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["parsers*", "detection*", "output*", "alerts*", "attack_timeline*", "navigator*", "yara_rules*", "integrity*", "baselines*", "integrations*", "threat_intel*", "siem*", "rules*", "analytics*", "dashboard*", "collector*", "alerters*"]
