@@ -6,7 +6,6 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass
@@ -192,10 +191,10 @@ def create_case_from_records(records: list[dict], title: str | None = None) -> d
     if not title:
         title = f"Security Incident: {max_severity.upper()} severity"
     
-    description = f"LogSentry incident analysis\n\n"
+    description = "LogSentry incident analysis\n\n"
     description += f"Events: {len(records)}\n"
     description += f"Unique IPs: {len(unique_ips)}\n"
     description += f"Severity: {max_severity}\n\n"
-    description += f"Source IPs:\n" + "\n".join(f"  - {ip}" for ip in unique_ips[:20])
+    description += "Source IPs:\n" + "\n".join(f"  - {ip}" for ip in unique_ips[:20])
     
     return create_case(title, description, severity, ips=unique_ips)

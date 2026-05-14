@@ -8,9 +8,7 @@ import argparse
 import json
 import re
 import sys
-import os
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 try:
@@ -28,10 +26,8 @@ from output.formatter import format_output
 from output.advanced import (
     score_records,
     generate_timeline,
-    enrich_ip,
     correlate_events,
-    generate_incident_report,
-    get_severity
+    generate_incident_report
 )
 
 
@@ -81,7 +77,7 @@ def parse_log_file(filepath: str, format_type: str = "auto") -> list[dict]:
                     break
 
     if not parser:
-        print(f"Error: Could not detect log format")
+        print("Error: Could not detect log format")
         sys.exit(1)
 
     with open(filepath, "r") as f:
@@ -435,7 +431,7 @@ def run_parse(args):
         print(f"\nSTIX bundle exported to: {args.export_stix}")
 
     if args.to_sigma:
-        from integrations.sigma import convert_to_sigma, save_sigma_rules, SigmaRule
+        from integrations.sigma import convert_to_sigma
         result = convert_to_sigma(records)
         print(f"\nSigma Rules Generated: {result.get('rules_generated', 0)}")
 
@@ -505,7 +501,6 @@ def run_schedule(args):
     print(f"[*] Scheduling: {args.command} every {args.interval} minutes")
 
     while True:
-        from datetime import datetime
         print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Running: {args.command}")
         import subprocess
         result = subprocess.run(args.command.split(), capture_output=True, text=True)
@@ -563,8 +558,8 @@ def run_watch(args):
     """Run watch command - real-time file monitoring."""
     try:
         from collector.file_tail import FileTailCollector
-        from alerters.console import ConsoleAlerter
-        from output.advanced import get_severity
+        from alerters.console import ConsoleAlerter  # noqa: F401
+        from output.advanced import get_severity  # noqa: F401
     except ImportError as e:
         print(f"Error: {e}")
         print("Install required: pip install rich")
@@ -603,7 +598,7 @@ def run_listen(args):
     """Run listen command - syslog listener."""
     try:
         from collector.syslog import SyslogListener
-        from output.advanced import get_severity
+        from output.advanced import get_severity  # noqa: F401
     except ImportError as e:
         print(f"Error: {e}")
         sys.exit(1)

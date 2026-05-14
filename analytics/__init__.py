@@ -2,9 +2,7 @@
 """Anomaly detection using statistical analysis."""
 
 from dataclasses import dataclass, field
-from typing import Optional
 from collections import defaultdict
-from datetime import datetime, timedelta
 import statistics
 
 

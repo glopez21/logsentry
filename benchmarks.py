@@ -2,7 +2,6 @@
 """Performance benchmarks for LogSentry."""
 
 import time
-import random
 from pathlib import Path
 
 from generate_logs import LogGenerator
@@ -44,7 +43,6 @@ def benchmark_parsing(log_size: int = 10000) -> dict:
 def benchmark_detection(records: int = 1000) -> dict:
     """Benchmark detection checks performance."""
     from detection.detection_checks import run_detection_checks
-    from main import parse_log_file
     
     gen = LogGenerator(seed=42)
     records_list = gen.generate_all_scenarios()
@@ -89,7 +87,6 @@ def benchmark_yara(records: int = 1000) -> dict:
 def benchmark_suppression(records: int = 1000) -> dict:
     """Benchmark alert suppression."""
     from alerts import AlertSuppressor
-    from main import parse_log_file
     
     gen = LogGenerator(seed=42)
     records_list = gen.generate_all_scenarios()

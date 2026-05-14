@@ -2,8 +2,6 @@
 """CloudTrail log parser for AWS security logs."""
 
 import json
-import re
-from datetime import datetime
 from typing import Optional
 
 

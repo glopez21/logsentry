@@ -7,7 +7,6 @@ import os
 import time
 import signal
 import threading
-from pathlib import Path
 from typing import Callable, Optional
 
 try:
@@ -103,14 +102,14 @@ class FileTailCollector:
         if self.parser:
             try:
                 record = self.parser(line)
-            except Exception as e:
+            except Exception:
                 pass
         
         # Invoke callback if provided
         if self.callback:
             try:
                 self.callback(line, record)
-            except Exception as e:
+            except Exception:
                 pass
         
         # Default: print alerts
@@ -176,5 +175,5 @@ class BatchFileCollector:
         if self.callback:
             try:
                 self.callback(batch_to_process)
-            except Exception as e:
+            except Exception:
                 pass

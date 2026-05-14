@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Optional
+
 
 
 @dataclass
@@ -217,7 +217,7 @@ def load_rules_from_file(filepath: str) -> list[YaraRule]:
     import json
     import yaml
     
-    path = filepath
+    
     if filepath.endswith(".yaml") or filepath.endswith(".yml"):
         with open(filepath) as f:
             data = yaml.safe_load(f)

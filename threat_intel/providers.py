@@ -151,7 +151,7 @@ class AbuseIPDBProvider(ThreatIntelProvider):
             import httpx
             with httpx.Client() as client:
                 response = client.get(
-                    f"https://api.abuseipdb.com/api/v2/check",
+                    "https://api.abuseipdb.com/api/v2/check",
                     headers={"Key": self.api_key},
                     params={"ipAddress": ip, "maxAgeInDays": 90}
                 )
@@ -160,7 +160,7 @@ class AbuseIPDBProvider(ThreatIntelProvider):
             
             attrs = data.get("data", {})
             
-            result.is_malicious = attrs.get("isWhitelisted", False) == False and attrs.get("totalReports", 0) > 0
+            result.is_malicious = not attrs.get("isWhitelisted", False) and attrs.get("totalReports", 0) > 0
             result.confidence = attrs.get("confidenceScore", 0)
             result.country = attrs.get("countryName", "")
             result.country_code = attrs.get("countryCode", "")

@@ -3,7 +3,6 @@
 
 import re
 from collections import defaultdict
-from datetime import datetime, timedelta
 
 
 MITRE_TACTICS = {
@@ -84,7 +83,6 @@ def find_failed_login_bursts(records: list[dict], threshold: int = 5, window_min
         if not src:
             continue
 
-        burst_time = record.get("timestamp", "")
         count = 1
 
         for other in failed[i+1:]:

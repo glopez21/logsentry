@@ -3,7 +3,6 @@
 Console Alerter - Real-time console alerts for suspicious events.
 """
 
-import sys
 from typing import Optional, List, Dict
 from datetime import datetime
 

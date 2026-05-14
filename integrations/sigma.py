@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -45,7 +44,7 @@ class SigmaRule:
         lines.append(f"author: {self.author}")
         lines.append(f"date: {self.date}")
         lines.append(f"modified: {self.modified}")
-        lines.append(f"tags:")
+        lines.append("tags:")
         for tag in self.tags:
             lines.append(f"  - {tag}")
         
@@ -186,7 +185,6 @@ def convert_to_sigma(records: list[dict]) -> dict:
 
 def save_sigma_rules(rules: list[SigmaRule], directory: str = "sigma_rules") -> dict:
     """Save Sigma rules to directory."""
-    import os
     from pathlib import Path
     
     path = Path(directory)

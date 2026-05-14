@@ -3,7 +3,6 @@
 Ticket Alerter - Creates tickets in external systems (AlertFlow, etc.)
 """
 
-import json
 import os
 from typing import Optional, Dict, Any
 from datetime import datetime

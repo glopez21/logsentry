@@ -2,7 +2,6 @@
 """Syslog parser for standard syslog format."""
 
 import re
-from datetime import datetime
 
 
 MITRE_TACTICS = {

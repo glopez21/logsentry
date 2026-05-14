@@ -2,8 +2,6 @@
 """Test suite for LogSentry."""
 
 import pytest
-import re
-from datetime import datetime
 
 
 class TestParsers:
@@ -110,7 +108,7 @@ class TestAdvanced:
     """Tests for advanced output features."""
 
     def test_severity_scoring(self):
-        from output.advanced import get_severity, score_records
+        from output.advanced import score_records
         records = [
             {"event_type": "ssh_login_fail", "message": "Failed password attempt"},
             {"event_type": "priv_esc", "message": "Privilege escalation detected"},
@@ -178,7 +176,7 @@ class TestYaraRules:
     """Tests for YARA-style rules."""
 
     def test_yara_scan(self):
-        from yara_rules import scan_yara, YaraEngine
+        from yara_rules import scan_yara
         records = [
             {"raw_message": "Failed password for admin from 185.220.101.45", "message": ""},
             {"raw_message": "Another failed attempt", "message": ""},

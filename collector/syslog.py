@@ -6,7 +6,6 @@ Syslog Listener - Listens for syslog messages over UDP/TCP.
 import socket
 import threading
 import signal
-import time
 from typing import Callable, Optional, Tuple
 
 
@@ -80,7 +79,7 @@ class SyslogListener:
                     self._handle_tcp()
             except socket.timeout:
                 continue
-            except Exception as e:
+            except Exception:
                 if self._running:
                     pass
     
@@ -93,7 +92,7 @@ class SyslogListener:
                 self._process_message(message, addr)
         except socket.timeout:
             pass
-        except Exception as e:
+        except Exception:
             pass
     
     def _handle_tcp(self) -> None:
@@ -114,7 +113,7 @@ class SyslogListener:
                 client.close()
         except socket.timeout:
             pass
-        except Exception as e:
+        except Exception:
             pass
     
     def _process_message(self, message: str, source: Tuple) -> None:
@@ -127,13 +126,13 @@ class SyslogListener:
         if self.parser:
             try:
                 record = self.parser(message)
-            except Exception as e:
+            except Exception:
                 pass
         
         if self.callback:
             try:
                 self.callback(message, record, source)
-            except Exception as e:
+            except Exception:
                 pass
     
     def is_running(self) -> bool:
@@ -170,7 +169,7 @@ class SyslogForwarder:
                 message.encode('utf-8'),
                 (self.destination, self.port)
             )
-        except Exception as e:
+        except Exception:
             pass
     
     def stop(self) -> None:

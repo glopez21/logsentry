@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Severity scoring, timeline generation, and report generation."""
 
-import re
 from datetime import datetime
-from typing import Any
 
 
 def enrich_ip(ip: str) -> dict:

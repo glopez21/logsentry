@@ -4,8 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Optional
+
 from collections import defaultdict
 
 
@@ -55,7 +54,7 @@ class AlertSuppressor:
                 return sev
         return "medium"
 
-    def add_alert(self, record: dict) -> Optional[AlertGroup]:
+    def add_alert(self, record: dict) -> AlertGroup | None:
         key = self._get_key(record)
         
         if key in self._groups:

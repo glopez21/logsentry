@@ -6,7 +6,6 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional
 
 
 @dataclass
@@ -166,7 +165,7 @@ class STIXBuilder:
             indicator_type="ip",
             pattern=pattern,
             name=f"LogSentry: Malicious IP {ip}",
-            description=description or f"IP detected by LogSentry analysis"
+            description=description or "IP detected by LogSentry analysis"
         )
 
     def add_domain_indicator(self, domain: str, description: str = "") -> str:
@@ -176,7 +175,7 @@ class STIXBuilder:
             indicator_type="domain",
             pattern=pattern,
             name=f"LogSentry: Malicious Domain {domain}",
-            description=description or f"Domain detected by LogSentry"
+            description=description or "Domain detected by LogSentry"
         )
 
     def build_bundle(self) -> dict:

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 def run_diff(args) -> None:
@@ -88,7 +88,7 @@ def run_diff(args) -> None:
 def run_replay(args) -> None:
     """Replay log file at compressed time scale."""
     import time
-    from main import parse_log_file, detect_format, LOG_PARSERS
+    from main import parse_log_file
     
     print(f"[*] Replaying {args.file} at {args.speed}x speed")
     print("[*] Press Ctrl+C to stop")
@@ -134,11 +134,11 @@ def run_schedule(args) -> None:
     import time
     import schedule as sched
     
-    print(f"[*] Scheduling monitoring job")
+    print("[*] Scheduling monitoring job")
     print(f"[*] Command: {args.command}")
     print(f"[*] Interval: every {args.interval} minutes")
     
-    job = sched.every(args.interval).minutes.do(run_scheduled_command, args.command)
+    sched.every(args.interval).minutes.do(run_scheduled_command, args.command)
     
     print("[*] Started. Press Ctrl+C to stop.")
     
@@ -150,7 +150,6 @@ def run_schedule(args) -> None:
 def run_scheduled_command(command: str) -> None:
     """Execute a scheduled command."""
     import subprocess
-    from datetime import datetime
     
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Running: {command}")
     
@@ -161,7 +160,7 @@ def run_scheduled_command(command: str) -> None:
     )
     
     if result.returncode == 0:
-        print(f"  [OK] Completed")
+        print("  [OK] Completed")
     else:
         print(f"  [ERROR] {result.stderr[:200]}")
 

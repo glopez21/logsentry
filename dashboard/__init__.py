@@ -2,7 +2,7 @@
 """Dashboard module with ASCII visualization and attack chain graphs."""
 
 from collections import defaultdict
-from datetime import datetime
+
 
 
 def horizontal_bar(value: int, max_value: int, width: int = 40, char: str = "█") -> str:

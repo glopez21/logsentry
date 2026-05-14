@@ -3,7 +3,7 @@
 
 import re
 from dataclasses import dataclass, field
-from typing import Optional
+
 from pathlib import Path
 
 
@@ -208,7 +208,7 @@ class RuleEngine:
         message = (record.get("raw_message", "") or record.get("message", "")).lower()
         event_type = record.get("event_type", "").lower()
         source_ip = record.get("source_ip", "")
-        user = record.get("user", "")
+        
         
         if rule.condition == "source_ip_starts_with":
             suspicious_prefixes = ("185.220.", "91.121.", "103.", "45.", "77.")

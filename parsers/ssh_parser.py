@@ -2,7 +2,6 @@
 """SSH auth log parser."""
 
 import re
-from datetime import datetime
 
 
 def parse_ssh_log(line: str) -> dict:
