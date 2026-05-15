@@ -261,7 +261,7 @@ class TestSigmaRules:
     """Tests for Sigma rule conversion."""
 
     def test_convert_to_sigma(self):
-        from sigma import convert_to_sigma
+        from integrations.sigma import convert_to_sigma
         records = [
             {"event_type": "ssh_login_fail", "mitre_tactic": "T1110", "raw_message": "Failed password"},
             {"event_type": "ssh_login_fail", "mitre_tactic": "T1110", "raw_message": "Failed password"},

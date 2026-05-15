@@ -61,6 +61,9 @@ warn_unused_configs = true
 disallow_untyped_defs = false
 check_untyped_defs = true
 
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
 [[tool.mypy.overrides]]
 module = ["fastapi.*", "uvicorn.*", "schedule", "sigma.*", "generate_logs"]
 ignore_missing_imports = true
