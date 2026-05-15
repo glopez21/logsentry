@@ -62,5 +62,5 @@ disallow_untyped_defs = false
 check_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["fastapi.*", "uvicorn.*", "schedule", "sigma.*"]
+module = ["fastapi.*", "uvicorn.*", "schedule", "sigma.*", "generate_logs"]
 ignore_missing_imports = true
