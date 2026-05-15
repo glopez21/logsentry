@@ -11,22 +11,22 @@ def parse_auth_log(line: str) -> dict | None:
 
     if "session opened" in line.lower():
         event_type = "session_open"
-        user = re.search(r"for\s+(\S+)\s+by", line)
+        user = re.search(r"for\s+user\s+(\S+)\s+by", line)
     elif "session closed" in line.lower():
         event_type = "session_close"
-        user = re.search(r"for\s+(\S+)\s+by", line)
+        user = re.search(r"for\s+user\s+(\S+)\s+by", line)
     elif "password changed" in line.lower():
         event_type = "password_change"
-        user = re.search(r"for\s+(\S+)\s+by", line)
+        user = re.search(r"for\s+user\s+(\S+)\s+by", line)
     elif "new password" in line.lower():
         event_type = "password_set"
-        user = re.search(r"for\s+(\S+)\s+by", line)
+        user = re.search(r"for\s+user\s+(\S+)\s+by", line)
     elif "account created" in line.lower() or "new account" in line.lower():
         event_type = "account_created"
-        user = re.search(r"for\s+(\S+)\s+by", line)
+        user = re.search(r"for\s+user\s+(\S+)\s+by", line)
     elif "account password" in line.lower():
         event_type = "account_password"
-        user = re.search(r"for\s+(\S+)\s+by", line)
+        user = re.search(r"for\s+user\s+(\S+)\s+by", line)
     else:
         return None
 

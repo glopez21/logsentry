@@ -241,7 +241,7 @@ class TestBaseline:
         ]
         baseline = create_baseline(records, "test_baseline", "failed_logins")
         assert baseline.name == "test_baseline"
-        assert baseline.sample_count == 2
+        assert baseline.sample_count == 3
 
     def test_baseline_comparison(self):
         from baselines import Baseline

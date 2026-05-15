@@ -11,12 +11,12 @@ def parse_ssh_log(line: str) -> dict | None:
 
     if "Accepted" in line:
         event_type = "ssh_login_success"
-        user = re.search(r"user=(\S+)", line)
+        user = re.search(r"(?:user=|for\s+)(\S+)", line)
         src_ip = re.search(r"from[ =](\S+)", line)
         src_port = re.search(r"port[ =](\d+)", line)
     elif "Failed" in line:
         event_type = "ssh_login_fail"
-        user = re.search(r"user=(\S+)", line)
+        user = re.search(r"(?:user=|for\s+)(\S+)", line)
         src_ip = re.search(r"from[ =](\S+)", line)
         src_port = re.search(r"port[ =](\d+)", line)
     elif "Invalid user" in line:

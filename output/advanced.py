@@ -47,7 +47,8 @@ SEVERITY_MAP = {
         "high cpu", "outbound connection", "unexpected"
     ],
     "low": [
-        "session open", "session close", "disconnect", "new session",
+        "session open", "session_open", "session close", "session_close",
+        "disconnect", "new session",
         "password changed", "cron job", "accepted password"
     ],
     "info": [
