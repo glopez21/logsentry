@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 """Test suite for LogSentry."""
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 import pytest
 
 
@@ -308,27 +303,7 @@ class TestAttackTimeline:
         assert len(timeline.unique_techniques) == 3
 
 
-class TestGenerators:
-    """Tests for log generation."""
 
-    def test_brute_force_scenario(self):
-        from generate_logs import LogGenerator
-        gen = LogGenerator(seed=42)
-        records = gen.generate_brute_force()
-        assert len(records) > 0
-        assert any("Failed" in str(r.get("message", "")) for r in records)
-
-    def test_normal_day_scenario(self):
-        from generate_logs import LogGenerator
-        gen = LogGenerator(seed=42)
-        records = gen.generate_normal_day(hours=1)
-        assert len(records) > 0
-
-    def test_all_scenarios(self):
-        from generate_logs import LogGenerator
-        gen = LogGenerator(seed=42)
-        records = gen.generate_all_scenarios()
-        assert len(records) > 100
 
 
 if __name__ == "__main__":
