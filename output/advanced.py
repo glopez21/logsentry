@@ -113,7 +113,7 @@ def generate_timeline(records: list[dict]) -> list[dict]:
 
 def correlate_events(records: list[dict]) -> dict:
     """Correlate related events."""
-    correlations = {
+    correlations: dict[str, list[dict]] = {
         "brute_force_campaigns": [],
         "port_scan_campaigns": [],
         "privilege_escalation_attempts": [],

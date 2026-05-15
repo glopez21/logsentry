@@ -4,7 +4,7 @@
 import re
 
 
-def parse_auth_log(line: str) -> dict:
+def parse_auth_log(line: str) -> dict | None:
     """Parse authentication log line."""
     timestamp_match = re.match(r"^(\w{3}\s+\d+\s+\d+:\d+:\d+)", line)
     timestamp = timestamp_match.group(1) if timestamp_match else ""
@@ -34,7 +34,7 @@ def parse_auth_log(line: str) -> dict:
         "timestamp": timestamp,
         "host": "auth",
         "user": user.group(1) if user else "",
-        "source_ip": re.search(r"(\d{1,3}\.){3}\d{1,3}", line).group(0) if re.search(r"(\d{1,3}\.){3}\d{1,3}", line) else "",
+        "source_ip": (ip_match.group(0) if (ip_match := re.search(r"(\d{1,3}\.){3}\d{1,3}", line)) else ""),
         "source_port": "",
         "destination_ip": "",
         "event_type": event_type,

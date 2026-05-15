@@ -19,8 +19,8 @@ class MISPClient:
     """Client for MISP (Malware Information Sharing Platform)."""
 
     def __init__(self, url: str | None = None, api_key: str | None = None):
-        self.url = url or os.getenv("MISP_URL", "")
-        self.api_key = api_key or os.getenv("MISP_API_KEY", "")
+        self.url = url or os.getenv("MISP_URL", "") or ""
+        self.api_key = api_key or os.getenv("MISP_API_KEY", "") or ""
         self.ssl_verify = os.getenv("MISP_SSL_VERIFY", "true").lower() != "false"
 
     def is_configured(self) -> bool:
@@ -34,11 +34,7 @@ class MISPClient:
 
         try:
             import httpx
-            headers = {
-                "Authorization": self.api_key,
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
+            headers: dict[str, str] = {"Authorization": self.api_key, "Content-Type": "application/json", "Accept": "application/json"}
             
             event_data = {
                 "Event": {
@@ -83,7 +79,7 @@ class MISPClient:
 
         try:
             import httpx
-            headers = {"Authorization": self.api_key, "Content-Type": "application/json"}
+            headers: dict[str, str] = {"Authorization": self.api_key, "Content-Type": "application/json"}
             
             event_data = {
                 "Event": {
@@ -131,7 +127,7 @@ class MISPClient:
 
         try:
             import httpx
-            headers = {"Authorization": self.api_key, "Content-Type": "application/json"}
+            headers: dict[str, str] = {"Authorization": self.api_key, "Content-Type": "application/json"}
             
             event_data = {
                 "Event": {

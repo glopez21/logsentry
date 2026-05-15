@@ -3,6 +3,8 @@
 Ticket Alerter - Creates tickets in external systems (AlertFlow, etc.)
 """
 
+from __future__ import annotations
+
 import os
 from typing import Optional, Dict, Any
 from datetime import datetime
@@ -11,7 +13,7 @@ from datetime import datetime
 try:
     import httpx
 except ImportError:
-    httpx = None
+    httpx = None  # type: ignore[no-redef,assignment]
 
 
 class TicketAlerter:

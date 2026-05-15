@@ -51,7 +51,7 @@ class TAXIIClient:
             
             cutoff = datetime.now() - timedelta(days=days)
             
-            params = {
+            params: dict[str, str | int] = {
                 "match_date": cutoff.isoformat(),
                 "limit": 1000
             }

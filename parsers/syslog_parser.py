@@ -38,7 +38,7 @@ MITRE_TACTICS = {
 }
 
 
-def parse_syslog(line: str) -> dict:
+def parse_syslog(line: str) -> dict | None:
     """Parse a syslog line and extract key fields."""
     tactic_match = re.search(r'\[TACTIC:([A-Z0-9]+)\]', line)
     mitre_tactic = tactic_match.group(1) if tactic_match else ""
@@ -73,7 +73,7 @@ def parse_syslog(line: str) -> dict:
 def extract_ip(text: str, direction: str = "src") -> str:
     """Extract IP address from text."""
     pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
-    matches = re.findall(pattern, text)
+    matches: list[str] = re.findall(pattern, text)
     if not matches:
         return ""
     return matches[0] if direction == "src" else matches[-1]

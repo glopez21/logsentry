@@ -86,7 +86,7 @@ def parse_log_file(filepath: str, format_type: str = "auto") -> list[dict]:
             if line:
                 if format_type == "auto":
                     detected = detect_format(line)
-                    current_parser = LOG_PARSERS.get(detected) if detected else parser
+                    current_parser = LOG_PARSERS.get(detected, parser) if detected else parser
                 else:
                     current_parser = parser
                 record = current_parser(line)
@@ -255,7 +255,7 @@ def run_parse(args):
         timeline = generate_timeline(records)
         print("\nEvent Timeline (sorted by severity):")
         print("-" * 80)
-        sorted_timeline = sorted(timeline, key=lambda x: {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}.get(x.get("severity"), 4))
+        sorted_timeline = sorted(timeline, key=lambda x: {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}.get(x.get("severity", ""), 4))
         for e in sorted_timeline[:20]:
             print(f"[{e.get('severity', 'info').upper():8}] {e.get('timestamp', '')} | {e.get('event_type', '')} | {e.get('user', '')} | {e.get('message', '')[:40]}")
 
@@ -412,8 +412,8 @@ def run_parse(args):
 
     if args.attack_timeline:
         from attack_timeline import reconstruct_attack, format_attack_timeline
-        timeline = reconstruct_attack(records)
-        print(format_attack_timeline(timeline))
+        attack_tl = reconstruct_attack(records)
+        print(format_attack_timeline(attack_tl))
 
     if args.integrity:
         from integrity import compute_log_hash
@@ -664,7 +664,8 @@ def run_lookup(args):
     from threat_intel import (
         enrich_ip, check_ip_reputation,
         VirusTotalProvider, AbuseIPDBProvider,
-        AlienVaultOTXProvider, ShodanProvider
+        AlienVaultOTXProvider, ShodanProvider,
+        ThreatIntelProvider,
     )
     
     ip = args.ip
@@ -677,16 +678,18 @@ def run_lookup(args):
         return
     
     if args.provider == "all":
-        result = enrich_ip(ip)
+        result = dict(enrich_ip(ip))
     else:
-        provider_map = {
-            "vt": VirusTotalProvider,
-            "abuseipdb": AbuseIPDBProvider,
-            "otx": AlienVaultOTXProvider,
-            "shodan": ShodanProvider,
-        }
-        provider = provider_map[args.provider]()
-        result = provider.lookup(ip)
+        provider: ThreatIntelProvider
+        if args.provider == "vt":
+            provider = VirusTotalProvider()
+        elif args.provider == "abuseipdb":
+            provider = AbuseIPDBProvider()
+        elif args.provider == "otx":
+            provider = AlienVaultOTXProvider()
+        else:
+            provider = ShodanProvider()
+        result = provider.lookup(ip).to_dict()
     
     if args.json:
         import json

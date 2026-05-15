@@ -63,7 +63,7 @@ def export_to_navigator(records: list[dict]) -> dict:
     for record in records:
         severity_map = {"critical": 10, "high": 7, "medium": 4, "low": 1, "info": 0}
         severity = record.get("severity", "info")
-        score = severity_map.get(severity, 0)
+        score: float = severity_map.get(severity, 0)
         
         tactic = record.get("mitre_tactic", "")
         if tactic:

@@ -49,7 +49,7 @@ class AlertSuppressor:
     def _get_severity(self, records: list[dict]) -> str:
         severity_order = ["critical", "high", "medium", "low", "info"]
         for r in records:
-            sev = r.get("severity", "info")
+            sev = str(r.get("severity", "info"))
             if sev in severity_order:
                 return sev
         return "medium"

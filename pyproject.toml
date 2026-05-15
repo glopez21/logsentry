@@ -33,7 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 server = ["fastapi>=0.100", "uvicorn>=0.23"]
-dev = ["pytest>=8.0", "ruff>=0.5", "mypy>=1.0", "pytest-cov"]
+dev = ["pytest>=8.0", "ruff>=0.5", "mypy>=1.0", "pytest-cov", "types-PyYAML", "pandas-stubs"]
 integrations = ["stix2>=3.0"]
 
 [project.scripts]
@@ -53,3 +53,14 @@ include = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["logsentry"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["fastapi.*", "uvicorn.*", "schedule", "sigma.*"]
+ignore_missing_imports = true

@@ -3,6 +3,8 @@
 Syslog Listener - Listens for syslog messages over UDP/TCP.
 """
 
+from __future__ import annotations
+
 import socket
 import threading
 import signal
@@ -29,8 +31,8 @@ class SyslogListener:
         self.buffer_size = buffer_size
         
         self._running = False
-        self._socket = None
-        self._thread = None
+        self._socket: socket.socket | None = None
+        self._thread: threading.Thread | None = None
         
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
@@ -85,8 +87,11 @@ class SyslogListener:
     
     def _handle_udp(self) -> None:
         """Handle incoming UDP messages."""
+        sock = self._socket
+        if sock is None:
+            return
         try:
-            data, addr = self._socket.recvfrom(self.buffer_size)
+            data, addr = sock.recvfrom(self.buffer_size)
             if data:
                 message = data.decode('utf-8', errors='ignore').strip()
                 self._process_message(message, addr)
@@ -97,8 +102,11 @@ class SyslogListener:
     
     def _handle_tcp(self) -> None:
         """Handle incoming TCP connections."""
+        sock = self._socket
+        if sock is None:
+            return
         try:
-            client, addr = self._socket.accept()
+            client, addr = sock.accept()
             client.settimeout(5.0)
             
             try:
@@ -152,7 +160,7 @@ class SyslogForwarder:
         self.destination = destination
         self.port = port
         self.protocol = protocol.lower()
-        self._socket = None
+        self._socket: socket.socket | None = None
     
     def start(self) -> None:
         """Initialize forwarder."""

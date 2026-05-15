@@ -56,7 +56,7 @@ def run_detection_checks(records: list[dict]) -> dict:
 
     users = set()
     sources = set()
-    event_counts = defaultdict(int)
+    event_counts: dict[str, int] = defaultdict(int)
 
     for r in records:
         if r.get("user"):
@@ -184,7 +184,7 @@ def find_data_exfiltration(records: list[dict]) -> list[str]:
 
 def find_mitre_tactics(records: list[dict]) -> dict:
     """Find and summarize MITRE ATT&CK tactics."""
-    tactics_found = defaultdict(int)
+    tactics_found: dict[str, int] = defaultdict(int)
     tactic_details = []
     
     for r in records:

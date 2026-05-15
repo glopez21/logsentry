@@ -4,7 +4,7 @@
 import re
 
 
-def parse_ssh_log(line: str) -> dict:
+def parse_ssh_log(line: str) -> dict | None:
     """Parse SSH log line and extract key fields."""
     timestamp_match = re.match(r"^(\w{3}\s+\d+\s+\d+:\d+:\d+)", line)
     timestamp = timestamp_match.group(1) if timestamp_match else ""

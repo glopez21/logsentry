@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """Threat intelligence providers for IP enrichment."""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import TYPE_CHECKING, Any, Optional
 import os
+
+if TYPE_CHECKING:
+    import httpx
 
 
 @dataclass
@@ -17,6 +22,7 @@ class ThreatIntelResult:
     country: str = ""
     country_code: str = ""
     isp: str = ""
+    os: str = ""
     is_tor: bool = False
     is_proxy: bool = False
     is_vpn: bool = False
@@ -37,6 +43,7 @@ class ThreatIntelResult:
             "country": self.country,
             "country_code": self.country_code,
             "isp": self.isp,
+            "os": self.os,
             "is_tor": self.is_tor,
             "is_proxy": self.is_proxy,
             "is_vpn": self.is_vpn,
@@ -49,13 +56,16 @@ class ThreatIntelResult:
         }
 
 
+AggregatedResult = dict[str, Any]
+
+
 class ThreatIntelProvider(ABC):
     """Base class for threat intelligence providers."""
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or self._get_api_key()
         self.enabled = bool(self.api_key)
-        self._client = None
+        self._client: httpx.Client | None = None
     
     def _get_api_key(self) -> str:
         env_var = self.__class__.__name__.replace("Provider", "").upper()
@@ -70,11 +80,12 @@ class ThreatIntelProvider(ABC):
         """Look up IP and return threat intel result."""
         pass
     
-    def _make_request(self, method: str, url: str, **kwargs) -> dict:
+    def _make_request(self, method: str, url: str, **kwargs) -> dict[str, Any]:
         """Make HTTP request with retries."""
         import httpx
         if not self._client:
             self._client = httpx.Client(timeout=30.0)
+        assert self._client is not None
         
         headers = kwargs.pop("headers", {})
         if self.api_key:
@@ -82,7 +93,8 @@ class ThreatIntelProvider(ABC):
         
         response = self._client.request(method, url, headers=headers, **kwargs)
         response.raise_for_status()
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result
 
 
 class VirusTotalProvider(ThreatIntelProvider):
@@ -279,9 +291,9 @@ class ThreatIntelAggregator:
             ShodanProvider(),
         ]
     
-    def lookup(self, ip: str) -> dict:
+    def lookup(self, ip: str) -> AggregatedResult:
         """Query all enabled providers and aggregate results."""
-        results = {
+        results: AggregatedResult = {
             "ip": ip,
             "providers_queried": [],
             "providers_available": [],
@@ -378,7 +390,7 @@ def check_ip_reputation(ip: str) -> str:
         return "clean"
 
 
-def enrich_ip(ip: str) -> dict:
+def enrich_ip(ip: str) -> AggregatedResult:
     """Enrich a single IP with threat intelligence from all providers."""
     aggregator = ThreatIntelAggregator()
     return aggregator.lookup(ip)

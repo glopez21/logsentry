@@ -52,7 +52,7 @@ class AnomalyDetector:
     
     def compute_baseline(self, records: list[dict], metric: str) -> Baseline:
         """Compute baseline statistics for a metric."""
-        values = []
+        values: list[float] = []
         
         for r in records:
             if metric == "failed_logins":
@@ -112,14 +112,14 @@ class AnomalyDetector:
                 self.compute_baseline(records, metric)
         return self.baselines
     
-    def detect_anomalies(self, current_records: list[dict], baseline_records: list[dict] = None) -> AnomalyReport:
+    def detect_anomalies(self, current_records: list[dict], baseline_records: list[dict] | None = None) -> AnomalyReport:
         """Detect anomalies by comparing current data against baselines."""
         if baseline_records:
             self.compute_all_baselines(baseline_records)
         elif not self.baselines:
             self.compute_all_baselines(current_records[:len(current_records)//2] if len(current_records) > 10 else current_records)
         
-        anomalies = []
+        anomalies: list[Anomaly] = []
         current_baselines = self.compute_all_baselines(current_records)
         
         for metric, baseline in current_baselines.items():
@@ -186,7 +186,7 @@ class AnomalyDetector:
     
     def _analyze_time_based_anomalies(self, records: list[dict], anomalies: list[Anomaly]):
         """Detect time-based anomalies (off-hours activity, bursts)."""
-        hour_counts = defaultdict(int)
+        hour_counts: dict[int, int] = defaultdict(int)
         
         for r in records:
             ts = r.get("timestamp", "")
@@ -216,7 +216,7 @@ class AnomalyDetector:
     
     def _analyze_ip_based_anomalies(self, records: list[dict], anomalies: list[Anomaly]):
         """Detect IP-based anomalies (single source flooding)."""
-        ip_counts = defaultdict(int)
+        ip_counts: dict[str, int] = defaultdict(int)
         
         for r in records:
             if ip := r.get("source_ip"):
@@ -227,7 +227,7 @@ class AnomalyDetector:
             avg_count = statistics.mean(ip_counts.values()) if ip_counts else 0
             
             if avg_count > 0 and max_count > avg_count * 5:
-                top_ip = max(ip_counts, key=ip_counts.get)
+                top_ip = max(ip_counts, key=lambda k: ip_counts[k])
                 anomalies.append(Anomaly(
                     metric="single_source_flood",
                     value=max_count,
@@ -250,7 +250,7 @@ class AnomalyDetector:
         }
 
 
-def detect_anomalies(records: list[dict], baseline_records: list[dict] = None, sensitivity: float = 2.0) -> dict:
+def detect_anomalies(records: list[dict], baseline_records: list[dict] | None = None, sensitivity: float = 2.0) -> dict:
     """Detect anomalies in log records."""
     detector = AnomalyDetector(sensitivity=sensitivity)
     report = detector.detect_anomalies(records, baseline_records)

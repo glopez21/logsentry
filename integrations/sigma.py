@@ -17,9 +17,9 @@ class SigmaRule:
     author: str = "LogSentry"
     date: str = ""
     modified: str = ""
-    tags: list[str] = None
-    logsource: dict = None
-    detection: dict = None
+    tags: list[str] | None = None
+    logsource: dict | None = None
+    detection: dict | None = None
     level: str = "medium"
 
     def __post_init__(self):
@@ -45,7 +45,7 @@ class SigmaRule:
         lines.append(f"date: {self.date}")
         lines.append(f"modified: {self.modified}")
         lines.append("tags:")
-        for tag in self.tags:
+        for tag in self.tags or []:
             lines.append(f"  - {tag}")
         
         if self.logsource:
@@ -90,7 +90,7 @@ class SigmaConverter:
                 id=self._generate_id(rule.get('name', '')),
                 description=rule.get('description', ''),
                 level=self._map_level(rule.get('severity', 'medium')),
-                tags=self._map_tags(rule.get('mitre_tactic', '')),
+                tags=list(self._map_tags(rule.get('mitre_tactic', ''))),
             )
             
             patterns = rule.get('patterns', [])
@@ -130,7 +130,7 @@ class SigmaConverter:
                 id=self._generate_id(event_type),
                 description=f"Detected {len(recs)} occurrences of {event_type}",
                 level="medium",
-                tags=self._map_tags(tactic),
+                tags=list(self._map_tags(tactic)),
             )
             sigma_rule.detection = {"selection": patterns[:5], "condition": "selection"}
             
@@ -150,7 +150,7 @@ class SigmaConverter:
     def _map_tags(self, tactic: str) -> list[str]:
         """Map MITRE tactic to Sigma tags."""
         if tactic in self.MITRE_TO_SIGMA:
-            return self.MITRE_TO_SIGMA[tactic]["tags"]
+            return list(self.MITRE_TO_SIGMA[tactic]["tags"])
         return [f"attack.{tactic.lower()}"] if tactic else ["attack.misc"]
 
     def _extract_patterns(self, records: list[dict]) -> list[str]:

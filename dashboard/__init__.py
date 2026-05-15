@@ -39,7 +39,7 @@ def event_timeline_chart(records: list[dict], width: int = 60) -> str:
     if not records:
         return "No data"
     
-    hour_events = defaultdict(int)
+    hour_events: dict[int, int] = defaultdict(int)
     for r in records:
         ts = r.get("timestamp", "")
         if ts:
@@ -92,7 +92,7 @@ def severity_distribution(records: list[dict], width: int = 40) -> str:
 
 def top_attackers(records: list[dict], limit: int = 10) -> str:
     """Show top attacking IPs."""
-    ip_counts = defaultdict(int)
+    ip_counts: dict[str, int] = defaultdict(int)
     for r in records:
         if ip := r.get("source_ip"):
             ip_counts[ip] += 1
@@ -113,7 +113,7 @@ def top_attackers(records: list[dict], limit: int = 10) -> str:
 
 def top_users(records: list[dict], limit: int = 10) -> str:
     """Show most targeted users."""
-    user_counts = defaultdict(int)
+    user_counts: dict[str, int] = defaultdict(int)
     for r in records:
         if user := r.get("user"):
             user_counts[user] += 1
@@ -134,7 +134,7 @@ def top_users(records: list[dict], limit: int = 10) -> str:
 
 def event_type_breakdown(records: list[dict]) -> str:
     """Show breakdown by event type."""
-    type_counts = defaultdict(int)
+    type_counts: dict[str, int] = defaultdict(int)
     for r in records:
         if et := r.get("event_type"):
             type_counts[et] += 1
@@ -155,7 +155,7 @@ def event_type_breakdown(records: list[dict]) -> str:
 
 def attack_chain_viz(records: list[dict]) -> str:
     """Visualize attack chain progression."""
-    phases = {
+    phases: dict[str, list[dict]] = {
         "recon": [],
         "initial_access": [],
         "execution": [],
@@ -214,7 +214,7 @@ def attack_chain_viz(records: list[dict]) -> str:
 
 def geolocation_map(records: list[dict]) -> str:
     """Show geographic distribution (simplified)."""
-    country_counts = defaultdict(int)
+    country_counts: dict[str, int] = defaultdict(int)
     
     tor_prefixes = ("185.220.", "91.121.")
     for r in records:

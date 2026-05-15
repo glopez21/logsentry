@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """SIEM export module for Elasticsearch and Splunk."""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import os
+
+if TYPE_CHECKING:
+    import httpx
 
 
 @dataclass
@@ -19,13 +24,14 @@ class SIEMEvent:
     user: str = ""
     host: str = ""
     severity: str = "info"
-    metadata: dict = None
+    metadata: dict | None = None
     
     def __post_init__(self):
         if self.metadata is None:
             self.metadata = {}
     
     def to_dict(self) -> dict:
+        metadata = self.metadata or {}
         return {
             "@timestamp": self.timestamp,
             "event.kind": "event",
@@ -38,7 +44,7 @@ class SIEMEvent:
             "user.name": self.user,
             "host.name": self.host,
             "log.source.name": self.source,
-            **self.metadata
+            **metadata
         }
 
 
@@ -48,7 +54,7 @@ class SIEMExporter(ABC):
     def __init__(self, endpoint: Optional[str] = None, api_key: Optional[str] = None):
         self.endpoint = endpoint or self._get_env("ENDPOINT")
         self.api_key = api_key or self._get_env("API_KEY")
-        self._client = None
+        self._client: httpx.Client | None = None
     
     def _get_env(self, key: str) -> str:
         return os.environ.get(f"SIEM_{key}", "")
@@ -63,7 +69,7 @@ class SIEMExporter(ABC):
         """Test connection to SIEM."""
         pass
     
-    def _get_client(self):
+    def _get_client(self) -> httpx.Client:
         import httpx
         if not self._client:
             self._client = httpx.Client(timeout=30.0)
@@ -158,7 +164,9 @@ class SplunkExporter(SIEMExporter):
             client = self._get_client()
             headers = {"Authorization": f"Splunk {self.api_key}", "Content-Type": "application/json"}
             
-            results = {"exported": 0, "failed": 0, "errors": []}
+            exported = 0
+            failed = 0
+            errors: list[str] = []
             
             for event in events:
                 doc = event.to_dict()
@@ -172,13 +180,12 @@ class SplunkExporter(SIEMExporter):
                 
                 response = client.post(self.endpoint, json=payload, headers=headers)
                 if response.status_code in (200, 201):
-                    results["exported"] += 1
+                    exported += 1
                 else:
-                    results["failed"] += 1
-                    results["errors"].append(response.text[:100])
+                    failed += 1
+                    errors.append(response.text[:100])
             
-            results["status"] = "success" if results["failed"] == 0 else "partial"
-            return results
+            return {"exported": exported, "failed": failed, "errors": errors, "status": "success" if failed == 0 else "partial"}
             
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -206,18 +213,18 @@ class SumoLogicExporter(SIEMExporter):
                 "X-Sumo-Client": "logsentry"
             }
             
-            results = {"exported": 0, "failed": 0}
+            exported = 0
+            failed = 0
             
             for event in events:
                 doc = event.to_dict()
                 response = client.post(self.endpoint, json=doc, headers=headers)
                 if response.status_code in (200, 201, 202):
-                    results["exported"] += 1
+                    exported += 1
                 else:
-                    results["failed"] += 1
+                    failed += 1
             
-            results["status"] = "success" if results["failed"] == 0 else "partial"
-            return results
+            return {"exported": exported, "failed": failed, "status": "success" if failed == 0 else "partial"}
             
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -257,7 +264,7 @@ def export_to_siem(
     if not events:
         return {"status": "no_events", "exported": 0}
     
-    exporters = {
+    exporters: dict[str, type[SIEMExporter]] = {
         "elasticsearch": ElasticsearchExporter,
         "splunk": SplunkExporter,
         "sumologic": SumoLogicExporter,

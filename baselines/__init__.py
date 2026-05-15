@@ -62,7 +62,7 @@ class Baseline:
     def compare(self, value: float) -> dict:
         """Compare a value against this baseline."""
         if self.std_dev == 0:
-            z_score = 999 if value > self.mean * 2 else 0
+            z_score = 999.0 if value > self.mean * 2 else 0.0
         else:
             z_score = (value - self.mean) / self.std_dev
         
@@ -156,7 +156,7 @@ def create_baseline(records: list[dict], name: str, metric: str) -> Baseline:
 
 def extract_metric_values(records: list[dict], metric: str) -> list[float]:
     """Extract metric values from records."""
-    values = []
+    values: list[float] = []
     
     for r in records:
         if metric == "failed_logins":

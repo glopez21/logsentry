@@ -156,7 +156,7 @@ class RuleEngine:
         ),
     ]
     
-    def __init__(self, rules: list[DetectionRule] = None):
+    def __init__(self, rules: list[DetectionRule] | None = None):
         self.rules = rules or self.BUILT_IN_RULES.copy()
         self._compiled_patterns: dict[str, re.Pattern] = {}
         self._compile_patterns()
@@ -207,7 +207,7 @@ class RuleEngine:
     def _record_matches_rule(self, rule: DetectionRule, record: dict) -> bool:
         message = (record.get("raw_message", "") or record.get("message", "")).lower()
         event_type = record.get("event_type", "").lower()
-        source_ip = record.get("source_ip", "")
+        source_ip = str(record.get("source_ip", ""))
         
         
         if rule.condition == "source_ip_starts_with":
@@ -236,7 +236,7 @@ class RuleEngine:
                 except re.error:
                     self._compiled_patterns[pattern] = re.compile(re.escape(pattern), re.IGNORECASE)
     
-    def load_rules_from_file(self, filepath: str):
+    def load_rules_from_file(self, filepath: str) -> dict:
         """Load rules from YAML or JSON file."""
         import json
         path = Path(filepath)
@@ -277,7 +277,7 @@ class RuleEngine:
                 self.add_rule(rule)
 
 
-def run_rule_engine(records: list[dict], rules_file: str = None) -> dict:
+def run_rule_engine(records: list[dict], rules_file: str | None = None) -> dict:
     """Run rule engine on records."""
     engine = RuleEngine()
     

@@ -3,18 +3,20 @@
 File Tail Collector - Watches log files and processes new lines in real-time.
 """
 
+from __future__ import annotations
+
 import os
 import time
 import signal
 import threading
-from typing import Callable, Optional
+from typing import Callable, IO, Optional
 
 try:
     from rich.console import Console
     from rich.theme import Theme
 except ImportError:
-    Console = None
-    Theme = None
+    Console = None  # type: ignore[misc,assignment]
+    Theme = None  # type: ignore[misc,assignment]
 
 
 DEFAULT_THEME = Theme({
@@ -34,18 +36,18 @@ class FileTailCollector:
         filepath: str,
         parser: Optional[Callable] = None,
         callback: Optional[Callable] = None,
-        console: Optional[Console] = None,
+        console: Console | None = None,
         follow_delay: float = 0.1
     ):
         self.filepath = filepath
         self.parser = parser
         self.callback = callback
-        self.console = console or (Console(theme=DEFAULT_THEME) if Console else None)
+        self.console: Console | None = console or (Console(theme=DEFAULT_THEME) if Console is not None else None)
         self.follow_delay = follow_delay
         
         self._running = False
         self._position = 0
-        self._file = None
+        self._file: IO[str] | None = None
         self._lock = threading.Lock()
         
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -141,7 +143,7 @@ class BatchFileCollector:
         self.callback = callback
         
         self._collector = FileTailCollector(filepath, parser, self._batch_callback)
-        self._batch = []
+        self._batch: list[tuple[str, dict | None]] = []
         self._batch_lock = threading.Lock()
         self._running = False
     

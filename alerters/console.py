@@ -3,6 +3,8 @@
 Console Alerter - Real-time console alerts for suspicious events.
 """
 
+from __future__ import annotations
+
 from typing import Optional, List, Dict
 from datetime import datetime
 
@@ -15,12 +17,12 @@ try:
     from rich.layout import Layout
     from rich import box
 except ImportError:
-    Console = None
-    Table = None
-    Live = None
-    Panel = None
-    Layout = None
-    box = None
+    Console = None  # type: ignore[misc,assignment]
+    Table = None  # type: ignore[misc,assignment]
+    Live = None  # type: ignore[misc,assignment]
+    Panel = None  # type: ignore[misc,assignment]
+    Layout = None  # type: ignore[misc,assignment]
+    box = None  # type: ignore[misc,assignment]
 
 
 SEVERITY_COLORS = {
@@ -113,7 +115,7 @@ class ConsoleAlerter:
         """Get summary of alerts."""
         summary = {"total": len(self.alerts)}
         
-        severity_counts = {}
+        severity_counts: Dict[str, int] = {}
         for alert in self.alerts:
             sev = alert["severity"]
             severity_counts[sev] = severity_counts.get(sev, 0) + 1
@@ -139,7 +141,7 @@ class LiveConsoleAlerter:
         self.alerts: List[Dict] = []
         
         self._severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
-        self._live = None
+        self._live: Live | None = None
     
     def alert(
         self,
@@ -175,7 +177,7 @@ class LiveConsoleAlerter:
     
     def _update_display(self) -> None:
         """Update live display."""
-        if not Table:
+        if Table is None:
             return
         
         table = Table(title="Recent Alerts", box=box.ROUNDED)
