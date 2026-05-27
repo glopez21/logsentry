@@ -8,8 +8,8 @@ import argparse
 import json
 import re
 import sys
-from datetime import datetime
-from typing import Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 try:
     import pandas as pd
@@ -196,14 +196,71 @@ Examples:
     serve_parser.add_argument("--host", default="0.0.0.0", help="Bind address")
     serve_parser.add_argument("--port", type=int, default=8080, help="Port number")
     
+    # Daemon command
+    daemon_parser = subparsers.add_parser("daemon", help="Run LogSentry as a persistent daemon")
+    daemon_parser.add_argument("-c", "--config", help="Path to config file")
+    daemon_parser.add_argument("--init-db", action="store_true", help="Initialize database schema and exit")
+    daemon_parser.add_argument("--check", action="store_true", help="Validate config and exit")
+
+    # Gen-rsyslog command
+    rsyslog_parser = subparsers.add_parser("gen-rsyslog", help="Generate rsyslog forwarder config")
+    rsyslog_parser.add_argument("--host", default="logsentry", help="LogSentry engine hostname or IP")
+    rsyslog_parser.add_argument("--port", type=int, default=514, help="LogSentry syslog port")
+    rsyslog_parser.add_argument("--protocol", choices=["udp", "tcp"], default="udp", help="Transport protocol")
+    rsyslog_parser.add_argument("--format", choices=["rfc3164", "rfc5424"], default="rfc5424", help="Syslog format")
+    rsyslog_parser.add_argument("--facility", default="*.*", help="Facility.priority filter (default: all)")
+    rsyslog_parser.add_argument("-o", "--output", help="Output file (default: stdout)")
+
+    # Query command
+    query_parser = subparsers.add_parser("query", help="Query stored logs from the database")
+    query_parser.add_argument("--since", help="Start time (ISO format, e.g. 2026-05-20T00:00:00Z)")
+    query_parser.add_argument("--until", help="End time")
+    query_parser.add_argument("--severity", choices=["critical", "high", "medium", "low", "info"], help="Filter by severity")
+    query_parser.add_argument("--source-ip", help="Filter by source IP")
+    query_parser.add_argument("--event-type", help="Filter by event type")
+    query_parser.add_argument("--search", help="Full-text search in log messages")
+    query_parser.add_argument("--labels", help="JSON label filter (e.g. '{\"host\":\"web01\"}')")
+    query_parser.add_argument("--limit", type=int, default=50, help="Max results")
+    query_parser.add_argument("--offset", type=int, default=0, help="Result offset")
+    query_parser.add_argument("-o", "--output", choices=["table", "json", "csv"], default="table", help="Output format")
+    query_parser.add_argument("-c", "--config", help="Path to config file")
+
+    # Tail command
+    tail_parser = subparsers.add_parser("tail", help="Live-tail logs from the engine via WebSocket")
+    tail_parser.add_argument("--host", default="localhost", help="LogSentry engine host")
+    tail_parser.add_argument("--port", type=int, default=8080, help="LogSentry API port")
+    tail_parser.add_argument("--severity", choices=["critical", "high", "medium", "low", "info"], help="Filter by severity")
+    tail_parser.add_argument("--search", help="Filter by search term")
+    tail_parser.add_argument("--api-key", help="API key for authenticated endpoints")
+
+    # Ingest command
+    ingest_parser = subparsers.add_parser("ingest", help="Bulk-ingest log files into the database")
+    ingest_parser.add_argument("path", help="Log file or directory to ingest")
+    ingest_parser.add_argument("--recursive", action="store_true", help="Walk directories recursively")
+    ingest_parser.add_argument("--pattern", default="*.log", help="Glob pattern for file discovery (default: *.log)")
+    ingest_parser.add_argument("--format", choices=["auto", "syslog", "ssh", "auth", "cloudtrail"], default="auto")
+    ingest_parser.add_argument("--labels", help="JSON labels to attach (e.g. '{\"host\":\"web01\",\"app\":\"nginx\"}')")
+    ingest_parser.add_argument("--dry-run", action="store_true", help="Count files and lines without inserting")
+    ingest_parser.add_argument("-c", "--config", help="Path to config file")
+
     # Parse arguments
-    if len(sys.argv) > 1 and sys.argv[1] not in ["parse", "watch", "listen", "ticket", "lookup"]:
+    if len(sys.argv) > 1 and sys.argv[1] not in ["parse", "watch", "listen", "ticket", "lookup", "daemon", "gen-rsyslog", "query", "ingest"]:
         # Default to parse command
         sys.argv.insert(1, "parse")
     
     args = parser.parse_args()
     
-    if args.command == "parse":
+    if args.command == "daemon":
+        run_daemon(args)
+    elif args.command == "gen-rsyslog":
+        run_gen_rsyslog(args)
+    elif args.command == "query":
+        run_query(args)
+    elif args.command == "ingest":
+        run_ingest(args)
+    elif args.command == "tail":
+        run_tail(args)
+    elif args.command == "parse":
         run_parse(args)
     elif args.command == "watch":
         run_watch(args)
@@ -511,49 +568,6 @@ def run_schedule(args):
         time_module.sleep(interval * 60)
 
 
-def run_serve(args):
-    """Start REST API server."""
-    try:
-        from fastapi import FastAPI, UploadFile, File
-        from fastapi.responses import JSONResponse
-        import uvicorn
-    except ImportError:
-        print("Error: Install server deps with: uv sync --extra server")
-        sys.exit(1)
-
-    app = FastAPI(title="LogSentry API")
-
-    @app.post("/parse")
-    async def parse_logs(file: UploadFile = File(...)):
-        content = await file.read()
-        lines = content.decode("utf-8").splitlines()
-        records = []
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            detected = detect_format(line)
-            if detected:
-                parser = LOG_PARSERS.get(detected)
-                if parser:
-                    record = parser(line)
-                    if record:
-                        records.append(record)
-        return JSONResponse(content={"status": "success", "count": len(records)})
-
-    @app.get("/lookup/{ip}")
-    async def lookup_ip(ip: str):
-        from threat_intel import enrich_ip
-        return JSONResponse(content=enrich_ip(ip))
-
-    @app.get("/health")
-    async def health():
-        return {"status": "healthy", "service": "logSentry", "version": "0.2.0"}
-
-    print(f"[*] Starting API server on {args.host}:{args.port}")
-    uvicorn.run(app, host=args.host, port=args.port)
-
-
 def run_watch(args):
     """Run watch command - real-time file monitoring."""
     try:
@@ -730,6 +744,655 @@ def run_lookup(args):
             print(f"  Country: {detail['country']}")
         if detail.get("tags"):
             print(f"  Tags: {', '.join(detail['tags'][:5])}")
+
+
+def run_daemon(args) -> None:
+    """Run LogSentry as a persistent daemon."""
+    from config import load_config
+    from daemon import LogSentryDaemon
+
+    config = load_config(args.config)
+
+    if args.check:
+        print("Config valid:")
+        import json
+        print(json.dumps(config, indent=2, default=str))
+        return
+
+    if args.init_db:
+        from db import LogStore
+        store = LogStore(dsn=config["storage"]["dsn"])
+        store.connect()
+        store.init_schema()
+        store.close()
+        print("Database schema initialized")
+        return
+
+    daemon = LogSentryDaemon(config)
+    daemon.start()
+
+
+def run_gen_rsyslog(args) -> None:
+    """Generate rsyslog config to forward logs to a LogSentry engine."""
+    host = args.host
+    port = args.port
+    proto = args.protocol
+    fmt = args.format
+    facility = args.facility
+
+    config_lines = f"""# LogSentry rsyslog forwarder config
+# Generated by: logsentry gen-rsyslog
+# Target: {host}:{port}/{proto}
+#
+# Install:
+#   1. Copy this file to /etc/rsyslog.d/90-logsentry.conf
+#   2. Restart rsyslog: sudo systemctl restart rsyslog
+
+{config_block(host, port, proto, fmt, facility)}
+"""
+    output = args.output
+    if output:
+        with open(output, "w") as f:
+            f.write(config_lines)
+        print(f"rsyslog config written to {output}")
+        print(f"Install: sudo cp {output} /etc/rsyslog.d/90-logsentry.conf && sudo systemctl restart rsyslog")
+    else:
+        print(config_lines)
+
+
+def config_block(host: str, port: int, proto: str, fmt: str, facility: str) -> str:
+    """Build the rsyslog config block."""
+    if fmt == "rfc5424":
+        template = "RSYSLOG_SyslogProtocol23Format"
+    else:
+        template = "RSYSLOG_TraditionalFileFormat"
+
+    if proto == "tcp":
+        target = f"@@{host}:{port}"
+    else:
+        target = f"@{host}:{port}"
+
+    return f"""# LogSentry remote forwarding
+# Forward {facility} to LogSentry engine via {proto.upper()}
+if $syslogfacility-text != 'local0' then {{
+    {facility} {target};{template}
+    stop
+}}
+
+# Local0 is reserved for LogSentry agent logs (not forwarded)
+local0.* /var/log/logsentry-agent.log
+"""
+
+
+def run_query(args) -> None:
+    """Query stored logs from the database."""
+    from config import load_config
+    from db import LogStore
+    from datetime import datetime
+
+    config = load_config(args.config)
+    store = LogStore(dsn=config["storage"]["dsn"])
+    store.connect()
+
+    kwargs: dict[str, Any] = {}
+    if args.since:
+        try:
+            kwargs["since"] = datetime.fromisoformat(args.since)
+        except ValueError:
+            print(f"Invalid --since: {args.since}")
+            return
+    if args.until:
+        try:
+            kwargs["until"] = datetime.fromisoformat(args.until)
+        except ValueError:
+            print(f"Invalid --until: {args.until}")
+            return
+    if args.severity:
+        kwargs["severity"] = args.severity
+    if args.source_ip:
+        kwargs["source_ip"] = args.source_ip
+    if args.event_type:
+        kwargs["event_type"] = args.event_type
+    if args.search:
+        kwargs["search"] = args.search
+    if args.labels:
+        import json
+        try:
+            kwargs["labels"] = json.loads(args.labels)
+        except json.JSONDecodeError:
+            print(f"Invalid --labels JSON: {args.labels}")
+            return
+    kwargs["limit"] = args.limit
+    kwargs["offset"] = args.offset
+
+    try:
+        results = store.query(**kwargs)  # type: ignore[arg-type]
+    except Exception as e:
+        print(f"Query error: {e}")
+        return
+    finally:
+        store.close()
+
+    if args.output == "json":
+        import json
+        print(json.dumps(results, indent=2, default=str))
+    elif args.output == "csv":
+        import pandas as pd
+        df = pd.DataFrame(results)
+        df.to_csv(sys.stdout, index=False)
+    else:
+        if not results:
+            print("No results")
+            return
+        from rich.table import Table
+        from rich.console import Console
+        console = Console()
+        table = Table(title=f"Logs ({len(results)} results)")
+        table.add_column("Time", style="cyan")
+        table.add_column("Severity", style="bold")
+        table.add_column("Source IP")
+        table.add_column("Event Type")
+        table.add_column("Message", width=60)
+        for r in results:
+            sev = r.get("severity", "info")
+            style = {"critical": "red bold", "high": "red", "medium": "yellow", "low": "green", "info": "blue"}.get(sev, "")
+            table.add_row(
+                str(r.get("timestamp", ""))[:19],
+                f"[{style}]{sev.upper()}[/]" if style else sev.upper(),
+                r.get("source_ip", "") or "-",
+                r.get("event_type", "") or "-",
+                (r.get("message", "") or "")[:60],
+            )
+        console.print(table)
+
+
+def run_ingest(args) -> None:
+    """Bulk-ingest log files into the database."""
+    from config import load_config
+    from db import LogStore
+    import os
+    import glob as glob_mod
+
+    config = load_config(args.config)
+    path = args.path
+    files: list[str] = []
+
+    if os.path.isfile(path):
+        files.append(path)
+    elif os.path.isdir(path):
+        pattern = f"**/{args.pattern}" if args.recursive else args.pattern
+        files = sorted(glob_mod.glob(os.path.join(path, pattern), recursive=args.recursive))
+    else:
+        print(f"Path not found: {path}")
+        return
+
+    if not files:
+        print("No files found")
+        return
+
+    labels = {}
+    if args.labels:
+        import json
+        try:
+            labels = json.loads(args.labels)
+        except json.JSONDecodeError:
+            print(f"Invalid --labels JSON: {args.labels}")
+            return
+
+    if args.dry_run:
+        total_lines = 0
+        for fp in files:
+            with open(fp) as f:
+                line_count = sum(1 for _ in f)
+            total_lines += line_count
+            print(f"  {fp}: {line_count} lines")
+        print(f"\nTotal: {len(files)} files, {total_lines} lines (dry run)")
+        return
+
+    # Connect to DB for actual ingest
+    store = LogStore(dsn=config["storage"]["dsn"])
+    store.connect()
+    store.init_schema()
+
+    total_parsed = 0
+    total_inserted = 0
+
+    for fp in files:
+        print(f"Ingesting {fp}...", end=" ", flush=True)
+        records = []
+        try:
+            with open(fp) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    record = parse_log_line(line)
+                    if record:
+                        record["labels"] = {**labels, "source": "ingest", "file": fp}
+                        records.append(record)
+        except Exception as e:
+            print(f"error: {e}")
+            continue
+
+        if records:
+            try:
+                inserted = store.insert_logs_batch(records)
+                total_parsed += len(records)
+                total_inserted += inserted
+                print(f"{len(records)} parsed, {inserted} stored")
+            except Exception as e:
+                print(f"db error: {e}")
+        else:
+            print("0 records parsed")
+
+    store.close()
+    print(f"\nDone: {total_parsed} parsed, {total_inserted} stored across {len(files)} files")
+
+
+def run_tail(args) -> None:
+    """Live-tail logs from the engine via WebSocket."""
+    import asyncio
+    import json
+
+    try:
+        import websockets  # type: ignore[import-not-found]
+    except ImportError:
+        print("Error: websockets required. Install with: pip install websockets")
+        return
+
+    uri = f"ws://{args.host}:{args.port}/api/v1/tail/ws"
+    if args.api_key:
+        uri += f"?api_key={args.api_key}"
+    if args.severity:
+        uri += f"{'&' if '?' in uri else '?'}severity={args.severity}"
+    if args.search:
+        uri += f"{'&' if '?' in uri else '?'}search={args.search}"
+
+    async def _listen():
+        async with websockets.connect(uri) as ws:
+            print(f"[*] Connected to {uri}")
+            print("[*] Waiting for logs... (Ctrl+C to stop)")
+            async for message in ws:
+                data = json.loads(message)
+                sev = data.get("severity", "info").upper()
+                ts = str(data.get("timestamp", ""))[:19]
+                src = data.get("source_ip", "") or "-"
+                msg = (data.get("message", "") or "")[:80]
+                print(f"[{ts}] [{sev:8}] {src:15} {msg}")
+
+    try:
+        asyncio.run(_listen())
+    except KeyboardInterrupt:
+        print("\n[*] Stopped.")
+    except websockets.exceptions.WebSocketException as e:
+        print(f"Connection error: {e}")
+
+
+def run_serve(args) -> None:
+    """Start REST API server with storage backend."""
+    from config import load_config
+
+    config = load_config()
+    store = None
+
+    # Initialize DB if configured
+    try:
+        from db import LogStore
+        store = LogStore(dsn=config["storage"]["dsn"])
+        store.connect()
+        store.init_schema()
+    except Exception as e:
+        print(f"Warning: DB not available, running without storage: {e}")
+
+    try:
+        from fastapi import FastAPI, Request, UploadFile, File
+        from fastapi.responses import JSONResponse
+        import uvicorn
+    except ImportError:
+        print("Error: Install server deps with: uv sync --extra server")
+        sys.exit(1)
+
+    app = FastAPI(title="LogSentry API")
+
+    @app.post("/ingest")
+    async def ingest_logs(file: UploadFile = File(...)) -> JSONResponse:
+        """Ingest log file — parse, store, and return count."""
+        content = await file.read()
+        lines = content.decode("utf-8").splitlines()
+
+        records = []
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            record = parse_log_line(line)
+            if record:
+                records.append(record)
+
+        # Store in Postgres
+        inserted = 0
+        if store and records:
+            try:
+                inserted = store.insert_logs_batch(records)
+            except Exception as e:
+                return JSONResponse(
+                    content={"status": "error", "message": str(e), "parsed": len(records)},
+                    status_code=500,
+                )
+
+        return JSONResponse(content={
+            "status": "success",
+            "parsed": len(records),
+            "stored": inserted,
+        })
+
+    @app.get("/api/v1/query")
+    async def query_logs(
+        since: str = "",
+        until: str = "",
+        severity: str = "",
+        source_ip: str = "",
+        event_type: str = "",
+        search: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ) -> JSONResponse:
+        """Query stored logs."""
+        if not store:
+            return JSONResponse(
+                content={"error": "Storage not available"},
+                status_code=503,
+            )
+
+        query_kwargs: dict[str, Any] = {}
+        if since:
+            try:
+                query_kwargs["since"] = datetime.fromisoformat(since)
+            except ValueError:
+                pass
+        if until:
+            try:
+                query_kwargs["until"] = datetime.fromisoformat(until)
+            except ValueError:
+                pass
+        if severity:
+            query_kwargs["severity"] = severity
+        if source_ip:
+            query_kwargs["source_ip"] = source_ip
+        if event_type:
+            query_kwargs["event_type"] = event_type
+        if search:
+            query_kwargs["search"] = search
+        query_kwargs["limit"] = min(limit, 1000)
+        query_kwargs["offset"] = offset
+
+        try:
+            results = store.query(**query_kwargs)  # type: ignore[arg-type]
+            return JSONResponse(content={"count": len(results), "results": results})
+        except Exception as e:
+            return JSONResponse(content={"error": str(e)}, status_code=500)
+
+    @app.get("/api/v1/stats")
+    async def engine_stats() -> JSONResponse:
+        """Get engine statistics."""
+        if not store:
+            return JSONResponse(content={"error": "Storage not available"}, status_code=503)
+        try:
+            stats = store.get_stats()
+            return JSONResponse(content=stats)
+        except Exception as e:
+            return JSONResponse(content={"error": str(e)}, status_code=500)
+
+    @app.get("/lookup/{ip}")
+    async def lookup_ip(ip: str) -> JSONResponse:
+        """Threat intel lookup for IP (with DB caching)."""
+        from threat_intel import enrich_ip
+
+        # Check cache first
+        cached = None
+        if store:
+            try:
+                cached = store.get_threat_intel(ip)
+            except Exception:
+                pass
+
+        if cached:
+            return JSONResponse(content={"cached": True, **cached})
+
+        result = enrich_ip(ip)
+
+        # Cache result
+        if store and "error" not in result:
+            try:
+                store.set_threat_intel(ip, result)
+            except Exception:
+                pass
+
+        return JSONResponse(content=result)
+
+    @app.get("/health")
+    async def health() -> dict:
+        """Health check endpoint."""
+        db_status = "connected" if store else "disconnected"
+        return {
+            "status": "healthy",
+            "service": "logsentry",
+            "version": "0.2.0",
+            "database": db_status,
+            "logs_stored": store.get_stats().get("total_logs", 0) if store else 0,
+        }
+
+    @app.post("/export/navigator")
+    async def export_navigator(file: UploadFile = File(...)) -> JSONResponse:
+        """Export to MITRE ATT&CK Navigator format."""
+        from navigator import export_to_navigator
+
+        content = await file.read()
+        lines = content.decode("utf-8").splitlines()
+
+        records = []
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            record = parse_log_line(line)
+            if record:
+                records.append(record)
+
+        result = export_to_navigator(records)
+        return JSONResponse(content=result)
+
+    # ── Prometheus /metrics ────────────────────────────────────────
+    from fastapi.responses import PlainTextResponse
+
+    @app.get("/metrics")
+    async def metrics() -> PlainTextResponse:
+        """Prometheus metrics endpoint (text format)."""
+        total_logs = store.get_stats().get("total_logs", 0) if store else 0
+        total_dets = store.get_stats().get("total_detections", 0) if store else 0
+        dets_24h = store.get_stats().get("detections_24h", 0) if store else 0
+        lines = [
+            "# HELP logsentry_logs_total Total logs ingested",
+            "# TYPE logsentry_logs_total counter",
+            f"logsentry_logs_total {total_logs}",
+            "# HELP logsentry_detections_total Total detections generated",
+            "# TYPE logsentry_detections_total counter",
+            f"logsentry_detections_total {total_dets}",
+            "# HELP logsentry_detections_24h Detections in last 24 hours",
+            "# TYPE logsentry_detections_24h gauge",
+            f"logsentry_detections_24h {dets_24h}",
+            "# HELP logsentry_up Daemon health (1=up)",
+            "# TYPE logsentry_up gauge",
+            f"logsentry_up {1 if store else 0}",
+        ]
+        if store:
+            by_sev = store.get_stats().get("by_severity", {})
+            for sev in ["critical", "high", "medium", "low", "info"]:
+                count = by_sev.get(sev, 0)
+                if count:
+                    lines.append("# HELP logsentry_logs_by_severity Logs by severity")
+                    lines.append("# TYPE logsentry_logs_by_severity gauge")
+                    lines.append(f'logsentry_logs_by_severity{{severity="{sev}"}} {count}')
+        return PlainTextResponse("\n".join(lines) + "\n")
+
+    # ── Grafana SimpleJSON Datasource ──────────────────────────────
+
+    @app.get("/grafana/")
+    async def grafana_root() -> dict:
+        """Grafana datasource discovery."""
+        return {}
+
+    @app.get("/grafana/search")
+    async def grafana_search_get() -> list[str]:
+        if not store:
+            return []
+        return ["critical", "high", "medium", "low", "info"]
+
+    @app.post("/grafana/search")
+    async def grafana_search() -> list[str]:
+        """Return searchable fields (label values)."""
+        if not store:
+            return []
+        return ["critical", "high", "medium", "low", "info"]
+
+    @app.post("/grafana/query")
+    async def grafana_query(body: dict) -> list[dict]:
+        """Return time-series data for Grafana."""
+        if not store:
+            return []
+        try:
+            targets = body.get("targets", [{}])
+            target = targets[0] if targets else {}
+            target_str = target.get("target", "") if isinstance(target, dict) else ""
+
+            # Parse interval range from body
+            rng = body.get("range", {})
+            since_str = rng.get("from", "") if isinstance(rng, dict) else ""
+            until_str = rng.get("to", "") if isinstance(rng, dict) else ""
+
+            kwargs: dict[str, Any] = {"limit": 500}
+            if since_str:
+                try:
+                    kwargs["since"] = datetime.fromisoformat(since_str.replace("Z", "+00:00"))
+                except (ValueError, AttributeError):
+                    pass
+            if until_str:
+                try:
+                    kwargs["until"] = datetime.fromisoformat(until_str.replace("Z", "+00:00"))
+                except (ValueError, AttributeError):
+                    pass
+            if target_str in ("critical", "high", "medium", "low", "info"):
+                kwargs["severity"] = target_str
+            elif target_str:
+                kwargs["search"] = target_str
+
+            results = store.query(**kwargs)  # type: ignore[arg-type]
+
+            # Group by severity for time-series
+            from collections import defaultdict
+            buckets: dict[str, list[list[Any]]] = defaultdict(list)
+            for r in results:
+                ts = r.get("timestamp")
+                sev = r.get("severity", "info")
+                if ts:
+                    ts_float = ts.timestamp() if hasattr(ts, "timestamp") else 0
+                    buckets[sev].append([ts_float * 1000, 1])
+
+            series = []
+            for sev, points in buckets.items():
+                series.append({
+                    "target": f"logs.{sev}",
+                    "datapoints": points,
+                })
+            return series if series else [{"target": "logs.empty", "datapoints": []}]
+        except Exception as e:
+            return [{"target": "logs.error", "datapoints": [], "error": str(e)}]
+
+    # ── Auth Middleware ────────────────────────────────────────────
+    api_key = config.get("server", {}).get("api_key", "")
+
+    @app.middleware("http")
+    async def auth_middleware(request: Request, call_next):
+        if not api_key:
+            return await call_next(request)
+        # Paths that don't require auth
+        public_paths = {"/health", "/metrics", "/grafana/", "/grafana/search"}
+        if request.url.path in public_paths:
+            return await call_next(request)
+        # WebSocket auth via query param
+        if request.url.path.endswith("/tail/ws"):
+            return await call_next(request)
+        header_key = request.headers.get("Authorization", "").removeprefix("Bearer ")
+        query_key = request.query_params.get("api_key", "")
+        if header_key == api_key or query_key == api_key:
+            return await call_next(request)
+        from fastapi.responses import JSONResponse
+        return JSONResponse(content={"error": "Unauthorized"}, status_code=401)
+
+    # ── WebSocket Live Tail ────────────────────────────────────────
+    import asyncio
+    from fastapi import WebSocket, WebSocketDisconnect
+
+    tail_clients: dict[WebSocket, dict[str, str]] = {}
+    last_tail_check = datetime.now(timezone.utc)
+
+    @app.websocket("/api/v1/tail/ws")
+    async def tail_websocket(ws: WebSocket):
+        await ws.accept()
+        filters: dict[str, str] = {}
+        sev_filter = ws.query_params.get("severity", "")
+        search_filter = ws.query_params.get("search", "")
+        if sev_filter:
+            filters["severity"] = sev_filter
+        if search_filter:
+            filters["search"] = search_filter
+        tail_clients[ws] = filters
+        try:
+            while True:
+                await ws.receive_text()
+        except WebSocketDisconnect:
+            tail_clients.pop(ws, None)
+
+    async def tail_broadcaster():
+        nonlocal last_tail_check
+        while True:
+            await asyncio.sleep(1)
+            if not tail_clients or not store:
+                continue
+            try:
+                since = last_tail_check
+                last_tail_check = datetime.now(timezone.utc)
+                rows = store.query(since=since, limit=200)
+                if not rows:
+                    continue
+                for ws, filters in list(tail_clients.items()):
+                    try:
+                        for row in rows:
+                            sev = row.get("severity", "")
+                            if filters.get("severity") and sev != filters["severity"]:
+                                continue
+                            if filters.get("search"):
+                                msg = row.get("message", "") or ""
+                                if filters["search"].lower() not in msg.lower():
+                                    continue
+                            import json as _json
+                            await ws.send_text(_json.dumps(row, default=str))
+                    except Exception:
+                        tail_clients.pop(ws, None)
+            except Exception:
+                pass
+
+    @app.on_event("startup")
+    async def _start_tail_broadcaster():
+        asyncio.create_task(tail_broadcaster())
+
+    # ── API Key auth for tail CLI ──────────────────────────────────
+    @app.get("/api/v1/tail/health")
+    async def tail_health() -> dict:
+        return {"status": "ok", "clients": len(tail_clients)}
+
+    print(f"[*] Starting LogSentry API server on {args.host}:{args.port}")
+    uvicorn.run(app, host=args.host, port=args.port)
 
 
 def parse_log_line(line: str) -> Optional[dict]:
