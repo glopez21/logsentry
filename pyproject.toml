@@ -31,7 +31,7 @@ dependencies = [
     "httpx>=0.27.0",
     "psycopg2-binary>=2.9",
     "pyyaml>=6.0",
-    "n3xuslib @ git+https://github.com/w01f/n3xuslib.git",
+    "n3xuslib @ git+https://github.com/glopez21/n3xuslib.git",
 ]
 
 [project.optional-dependencies]
@@ -45,9 +45,9 @@ augur = ["augur-client @ git+https://github.com/glopez21/augur-client.git"]
 logsentry = "main:main"
 
 [project.urls]
-Homepage = "https://github.com/w01f/logsentry"
-Repository = "https://github.com/w01f/logsentry"
-Documentation = "https://github.com/w01f/logsentry#readme"
+Homepage = "https://github.com/glopez21/logsentry"
+Repository = "https://github.com/glopez21/logsentry"
+Documentation = "https://github.com/glopez21/logsentry#readme"
 
 [tool.hatch.metadata]
 allow-direct-references = true
