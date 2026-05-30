@@ -486,6 +486,19 @@ class LogSentryDaemon:
             except Exception as e:
                 logger.debug("Augur push failed: %s", e)
 
+        # Emit to n3xusDB event_outbox via n3xuslib
+        from n3xus import emit_alert
+
+        instance = self.config.get("engine", {}).get("instance", "")
+        emit_alert(
+            source_instance=instance,
+            rule_name=rule_name,
+            severity=severity,
+            description=description,
+            source_ip=source_ip,
+            event_type=event_type,
+        )
+
     # ── Stats ─────────────────────────────────────────────────────
 
     def _stats_loop(self) -> None:

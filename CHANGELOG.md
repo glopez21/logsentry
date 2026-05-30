@@ -2,6 +2,81 @@
 
 All notable changes to LogSentry will be documented in this file.
 
+## [0.3.0] - 2026-05-21
+
+### Added
+
+#### Engine Mode
+- **Daemon loop** (`daemon.py`) — persistent ingest → store → detect → alert pipeline
+  - Syslog UDP/TCP listener with RFC3164/RFC5424 support
+  - File watcher for local log files
+  - Configurable detection interval and stats interval
+  - `--init-db` flag to bootstrap Postgres schema
+  - `--check` flag to validate config and exit
+
+- **PostgreSQL storage layer** (`db/store.py`, `db/schema.py`)
+  - Daily-partitioned `logs` table with BRIN + GIN indexes
+  - Full-text search via tsvector
+  - Auto-partitioning on ingest
+  - Retention policy with `drop_old_partitions(days)`
+  - Detection results table (`logsentry.detections`)
+  - Threat intel cache (`logsentry.threat_intel_cache`)
+  - Cross-project shared schemas (`shared.hosts`, `shared.apps`)
+
+- **Config system** (`config/config.py`)
+  - YAML config with lookup: `./logsentry.yaml` → `~/.config/logsentry/` → `/etc/logsentry/`
+  - Environment variable overrides
+  - Cross-project schema sections (logsentry, alertflow, threatpulse, shared)
+
+#### CLI Commands
+- `logsentry daemon` — run the engine
+- `logsentry query` — query stored logs (table/json/csv output)
+- `logsentry ingest <path>` — bulk backfill with recursive glob, label tagging, dry-run
+- `logsentry tail` — WebSocket live tail
+- `logsentry gen-rsyslog` — generate rsyslog forwarder config (UDP/TCP, RFC3164/RFC5424)
+
+#### FastAPI Server
+- `/ingest` — POST log ingestion
+- `/api/v1/query` — query with filters (severity, source_ip, event_type, search, time range)
+- `/api/v1/stats` — storage statistics
+- `/api/v1/tail/ws` — WebSocket live tail
+- `/lookup/{ip}` — threat intel cache lookup
+- `/health` — health check
+- `/export/navigator` — MITRE Navigator export
+- `/metrics` — Prometheus text-format metrics
+- `/grafana/search`, `/grafana/query` — SimpleJSON datasource
+
+#### Detection & Alerting
+- Alert rules engine — YAML-defined rules in `logsentry.yaml`
+- Detection checks: failed login bursts, new accounts, MITRE tactic extraction
+- Notification backends: Discord webhook, Slack webhook, Telegram bot
+- Prometheus metrics for detection pipeline
+
+#### Deployment
+- Systemd unit (`deploy/logsentry.service`)
+- Docker Compose (`docker-compose.yml`) with postgres, logsentry, db-init
+- Dockerfile with rsyslog support
+- `deploy/install.sh` installer script
+
+#### Auth
+- API key middleware on HTTP endpoints (Bearer token + query param fallback)
+- Public paths exempted: `/health`, `/metrics`, `/grafana/`
+
+### Testing
+- 23 integration tests (`tests/test_integration.py`) with mocked Postgres
+  - Store: insert, query, detection, host registration, threat intel, stats, retention
+  - Detection: burst detection, MITRE extraction, false positive checks
+  - Parsers: SSH fail/success, syslog, empty lines
+  - Daemon: alert rule evaluation, notifier dispatch
+  - Config: defaults, env overrides, YAML loading
+
+### Changed
+- `uv run python main.py` → `uv run main.py` throughout
+- moved from file-based detection to DB-backed engine pipeline
+
+### Dependencies
+- Added: psycopg2-binary, pyyaml, fastapi, uvicorn, prometheus-client, websockets
+
 ## [0.2.0] - 2026-05-09
 
 ### Added
@@ -113,6 +188,24 @@ All notable changes to LogSentry will be documented in this file.
 ---
 
 ## Migration Guide
+
+### From 0.2.0 to 0.3.0
+
+The engine mode replaces the file-based CLI workflow. Existing parsers and detection logic are preserved.
+
+New required dependency: PostgreSQL.
+
+To migrate:
+```bash
+# Install new dependencies
+uv sync --extra dev
+
+# Initialize the database
+uv run main.py daemon --init-db
+
+# Validate config
+uv run main.py daemon --check
+```
 
 ### From 0.1.0 to 0.2.0
 

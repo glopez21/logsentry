@@ -31,6 +31,7 @@ dependencies = [
     "httpx>=0.27.0",
     "psycopg2-binary>=2.9",
     "pyyaml>=6.0",
+    "n3xuslib @ git+https://github.com/w01f/n3xuslib.git",
 ]
 
 [project.optional-dependencies]
@@ -68,7 +69,7 @@ packages = [
     "navigator", "notifiers", "output", "parsers",
     "rules", "siem", "threat_intel", "yara_rules",
 ]
-force-include = {"main.py" = "main.py", "daemon.py" = "daemon.py"}
+force-include = {"main.py" = "main.py", "daemon.py" = "daemon.py", "n3xus.py" = "n3xus.py"}
 
 [tool.mypy]
 python_version = "3.12"

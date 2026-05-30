@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: logsentry
+      POSTGRES_USER: logsentry
+      POSTGRES_PASSWORD: ${LOGSENTRY_DB_PASSWORD:-logsentry}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logsentry"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  logsentry:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      LOGSENTRY_DSN: postgresql://logsentry:${LOGSENTRY_DB_PASSWORD:-logsentry}@postgres:5432/logsentry
+      LOGSENTRY_MODE: daemon
+      VT_API_KEY: ${VT_API_KEY:-}
+      ABUSEIPDB_API_KEY: ${ABUSEIPDB_API_KEY:-}
+      OTX_API_KEY: ${OTX_API_KEY:-}
+      SHODAN_API_KEY: ${SHODAN_API_KEY:-}
+      AUGUR_URL: ${AUGUR_URL:-}
+      AUGUR_API_KEY: ${AUGUR_API_KEY:-}
+      AUGUR_AGENT_NAME: ${AUGUR_AGENT_NAME:-logsentry}
+    ports:
+      - "514:514/udp"
+      - "8080:8080"
+    volumes:
+      - logs:/var/log
+      - ./logsentry.yaml:/etc/logsentry/logsentry.yaml:ro
+    restart: unless-stopped
+
+  # Init: run --init-db once, then exit
+  db-init:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      LOGSENTRY_DSN: postgresql://logsentry:${LOGSENTRY_DB_PASSWORD:-logsentry}@postgres:5432/logsentry
+    command: ["daemon", "--init-db"]
+    restart: no
+
+volumes:
+  pgdata:
+  logs:

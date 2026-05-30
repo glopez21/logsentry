@@ -1,0 +1,103 @@
+# LogSentry Engine Configuration
+# See https://github.com/w01f/logsentry for documentation
+
+engine:
+  # Run mode: "daemon" (persistent) or "cli" (ad-hoc, default)
+  mode: daemon
+
+  # Log level for engine itself
+  log_level: info
+
+  # How often to run detection pipelines against new logs (seconds)
+  detection_interval: 30
+
+  # How often to print health/throughput stats (seconds)
+  stats_interval: 60
+
+storage:
+  # PostgreSQL connection
+  dsn: postgresql://logsentry:logsentry@localhost:5432/logsentry
+
+  # Connection pool
+  pool_min: 2
+  pool_max: 10
+
+  # Retention: auto-drop partitions older than this
+  retention_days: 90
+
+  # Batch insert size
+  batch_size: 500
+  flush_interval: 5
+
+ingest:
+  # Syslog listener
+  syslog:
+    enabled: true
+    bind: 0.0.0.0
+    port: 514
+    protocol: udp
+
+  # HTTP ingestion endpoint (runs inside the FastAPI server)
+  http:
+    enabled: true
+
+  # File watchers — directories to tail *.log files
+  file_watchers:
+    enabled: false
+    paths:
+      - /var/log
+
+detection:
+  # Run detection rules on ingested logs
+  enabled: true
+
+  # Custom alert rules (YAML)
+  rules:
+    - name: brute_force_burst
+      description: Multiple failed logins from same IP
+      severity: high
+      condition:
+        event_type: failed_login
+        threshold: 5
+        window: 5m
+    - name: ssh_root_login
+      description: SSH login as root
+      severity: high
+      condition:
+        event_type: ssh_login
+        user: root
+
+  # Alert routing
+  alerts:
+    stdout: true
+    webhook: ""
+    discord:
+      webhook_url: ""
+    slack:
+      webhook_url: ""
+    telegram:
+      bot_token: ""
+      chat_id: ""
+
+server:
+  # FastAPI server for query & ingest
+  host: 0.0.0.0
+  port: 8080
+
+# Cross-project database schemas managed by LogSentry
+schemas:
+  - logsentry    # LogSentry's own tables (logs, detections, threat_intel_cache)
+  - alertflow    # Shared alertflow schema
+  - threatpulse  # Shared threatpulse schema
+  - shared       # Cross-project views (hosts, apps, unified_events)
+
+# Augur SOC hub integration
+# When enabled, detection alerts are pushed to the Augur hub as events
+# Install: pip install 'logsentry[augur]'
+augur:
+  enabled: false
+  hub_url: "http://augur:8001"
+  agent_name: "logsentry"
+  agent_type: "logsentry"
+  api_key: ""
+  heartbeat_interval: 30

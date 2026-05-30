@@ -1,0 +1,36 @@
+[Unit]
+Description=LogSentry — Security Log Engine
+Documentation=https://github.com/w01f/logsentry
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=logsentry
+Group=logsentry
+WorkingDirectory=/opt/logsentry
+
+# Path to virtualenv
+ExecStart=/opt/logsentry/.venv/bin/python /opt/logsentry/main.py daemon
+
+# Config file
+Environment=LOGSENTRY_CONFIG=/etc/logsentry/logsentry.yaml
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+# Restart on failure
+Restart=on-failure
+RestartSec=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
