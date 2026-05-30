@@ -15,6 +15,12 @@
 - No rate limiting on the syslog UDP/TCP listener — a noisy source can flood the ingestion pipeline.
 - No graceful SIGHUP reload — daemon must be restarted to pick up config changes.
 
+## Deployment
+
+- `/home/w01f/projects/logsentry/logsentry.yaml` hardcoded path removed from `config/config.py` defaults — now searches `/etc/logsentry/`, `./`, `~/.config/logsentry/`.
+- `n3xus.py` must be force-included in wheel (added to `pyproject.toml` force-include).
+- Remote nodes: set `N3XUSLIB_MODE=http` to push events via Omn1L1nk instead of direct DB.
+
 ## Feature Gaps (Phase 5 — v0.2.0 Parity)
 
 These features exist in the CLI but haven't been ported to the engine detection pipeline:
