@@ -54,7 +54,7 @@ DEFAULT_CONFIG = {
     },
     "schemas": ["logsentry", "alertflow", "threatpulse", "shared"],
     "augur": {
-        "enabled": False,
+        "enabled": bool(os.environ.get("AUGUR_URL")),
         "hub_url": os.environ.get("AUGUR_URL", ""),
         "agent_name": os.environ.get("AUGUR_AGENT_NAME", "logsentry"),
         "agent_type": os.environ.get("AUGUR_AGENT_TYPE", "logsentry"),

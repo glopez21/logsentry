@@ -140,6 +140,14 @@ wheels = [
 ]
 
 [[package]]
+name = "augur-client"
+version = "0.1.0"
+source = { git = "https://github.com/glopez21/augur-client.git#99676bda05e2e8570367ed66883d2b312de024bd" }
+dependencies = [
+    { name = "httpx" },
+]
+
+[[package]]
 name = "certifi"
 version = "2026.4.22"
 source = { registry = "https://pypi.org/simple" }
@@ -512,6 +520,7 @@ version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
+    { name = "n3xuslib" },
     { name = "pandas" },
     { name = "psycopg2-binary" },
     { name = "pyyaml" },
@@ -521,6 +530,9 @@ dependencies = [
 [package.optional-dependencies]
 async = [
     { name = "asyncpg" },
+]
+augur = [
+    { name = "augur-client" },
 ]
 dev = [
     { name = "mypy" },
@@ -542,9 +554,11 @@ server = [
 [package.metadata]
 requires-dist = [
     { name = "asyncpg", marker = "extra == 'async'", specifier = ">=0.29" },
+    { name = "augur-client", marker = "extra == 'augur'", git = "https://github.com/glopez21/augur-client.git" },
     { name = "fastapi", marker = "extra == 'server'", specifier = ">=0.100" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0" },
+    { name = "n3xuslib", git = "https://github.com/glopez21/n3xuslib.git" },
     { name = "pandas", specifier = ">=3.0.2" },
     { name = "pandas-stubs", marker = "extra == 'dev'" },
     { name = "psycopg2-binary", specifier = ">=2.9" },
@@ -558,7 +572,7 @@ requires-dist = [
     { name = "uvicorn", marker = "extra == 'server'", specifier = ">=0.23" },
     { name = "websockets", marker = "extra == 'server'", specifier = ">=12.0" },
 ]
-provides-extras = ["server", "dev", "integrations", "async"]
+provides-extras = ["server", "dev", "integrations", "async", "augur"]
 
 [[package]]
 name = "markdown-it-py"
@@ -639,6 +653,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a2/6e/371856a3fb9d31ca8dac321cda606860fa4548858c0cc45d9d1d4ca2628b/mypy_extensions-1.1.0.tar.gz", hash = "sha256:52e68efc3284861e772bbcd66823fde5ae21fd2fdb51c62a211403730b916558", size = 6343, upload-time = "2025-04-22T14:54:24.164Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/79/7b/2c79738432f5c924bef5071f933bcc9efd0473bac3b4aa584a6f7c1c8df8/mypy_extensions-1.1.0-py3-none-any.whl", hash = "sha256:1be4cccdb0f2482337c4743e60421de3a356cd97508abadd57d47403e94f5505", size = 4963, upload-time = "2025-04-22T14:54:22.983Z" },
+]
+
+[[package]]
+name = "n3xuslib"
+version = "0.1.0"
+source = { git = "https://github.com/glopez21/n3xuslib.git#f1a2ec033ee82402f408dcb7e1ccd1c015764f95" }
+dependencies = [
+    { name = "asyncpg" },
+    { name = "httpx" },
 ]
 
 [[package]]

@@ -64,6 +64,185 @@ class TestParsers:
         assert result["user"] == "admin"
         assert result["source_ip"] == "192.168.1.10"
 
+    def test_rfc5424_parser(self):
+        from parsers.rfc5424_parser import parse_rfc5424
+        line = "<14>1 2024-04-23T12:34:56Z myhost myapp 1234 ID47 [exampleSDID@32473 iut=\"3\"] Hello world"
+        result = parse_rfc5424(line)
+        assert result is not None
+        assert result["timestamp"] == "2024-04-23T12:34:56Z"
+        assert result["host"] == "myhost"
+        assert result["raw_message"] == "Hello world"
+
+    def test_rfc5424_parser_invalid(self):
+        from parsers.rfc5424_parser import parse_rfc5424
+        assert parse_rfc5424("not syslog") is None
+
+    def test_web_access_combined(self):
+        from parsers.web_access_parser import parse_web_access
+        line = '192.168.1.1 - - [10/Oct/2000:13:55:36 -0700] "GET /index.html HTTP/1.0" 200 2326 "http://referer.com" "Mozilla/5.0"'
+        result = parse_web_access(line)
+        assert result is not None
+        assert result["source_ip"] == "192.168.1.1"
+        assert result["http_method"] == "GET"
+        assert result["http_path"] == "/index.html"
+        assert result["http_status"] == 200
+
+    def test_web_access_common(self):
+        from parsers.web_access_parser import parse_web_access
+        line = '10.0.0.1 - - [10/Oct/2000:13:55:36 -0700] "POST /api/login HTTP/1.1" 401 1234'
+        result = parse_web_access(line)
+        assert result is not None
+        assert result["http_status"] == 401
+        assert result["severity"] == "warning"
+
+    def test_web_access_invalid(self):
+        from parsers.web_access_parser import parse_web_access
+        assert parse_web_access("not a web log") is None
+
+    def test_web_error_apache(self):
+        from parsers.web_error_parser import parse_web_error
+        line = '[Wed Oct 11 14:32:52.123456 2000] [core:error] [pid 1234:tid 5678] [client 1.2.3.4] File does not exist: /var/www/html/foo'
+        result = parse_web_error(line)
+        assert result is not None
+        assert result["source_ip"] == "1.2.3.4"
+        assert result["severity"] == "error"
+
+    def test_web_error_nginx(self):
+        from parsers.web_error_parser import parse_web_error
+        line = '2024/04/23 12:34:56 [error] 1234#5678: *99 connect() failed (111: Connection refused) while connecting to upstream, client: 1.2.3.4'
+        result = parse_web_error(line)
+        assert result is not None
+        assert result["severity"] == "error"
+        assert "connect() failed" in result["raw_message"]
+
+    def test_web_error_invalid(self):
+        from parsers.web_error_parser import parse_web_error
+        assert parse_web_error("random text") is None
+
+    def test_auditd_parser(self):
+        from parsers.auditd_parser import parse_auditd
+        line = 'type=SYSCALL msg=audit(1364481363.243:24287): arch=c000003e syscall=2 success=no exit=-13 a0=7ffe4f1d0db0 a1=0 a2=0 a3=1e items=1 ppid=1234 pid=5678 auid=1000 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=1 comm="cat" exe="/usr/bin/cat" key="access"'
+        result = parse_auditd(line)
+        assert result is not None
+        assert result["event_type"] == "audit_syscall"
+        assert result["process"] == "SYSCALL"
+
+    def test_auditd_parser_invalid(self):
+        from parsers.auditd_parser import parse_auditd
+        assert parse_auditd("not audit") is None
+
+    def test_firewall_iptables(self):
+        from parsers.firewall_parser import parse_firewall
+        line = "Apr 23 12:34:56 host kernel: [12345.678901] DROP IN=eth0 OUT= MAC=00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd SRC=10.0.0.1 DST=10.0.0.2 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=0 PROTO=TCP SPT=12345 DPT=80 WINDOW=65535 RES=0x00 SYN URGP=0"
+        result = parse_firewall(line)
+        assert result is not None
+        assert result["source_ip"] == "10.0.0.1"
+        assert result["destination_ip"] == "10.0.0.2"
+        assert result["action"] == "DROP"
+        assert result["severity"] == "warning"
+
+    def test_firewall_firewalld(self):
+        from parsers.firewall_parser import parse_firewall
+        line = "Apr 23 12:34:56 host firewalld[1234]: DROP_IN: IN=eth0 SRC=1.2.3.4 DST=10.0.0.1 PROTO=TCP SPT=55555 DPT=22"
+        result = parse_firewall(line)
+        assert result is not None
+
+    def test_firewall_invalid(self):
+        from parsers.firewall_parser import parse_firewall
+        assert parse_firewall("not firewall") is None
+
+    def test_json_log_parser(self):
+        from parsers.json_log_parser import parse_json_log
+        line = '{"timestamp":"2024-04-23T12:34:56Z","level":"error","message":"Something went wrong","service":"myapp","host":"server1"}'
+        result = parse_json_log(line)
+        assert result is not None
+        assert result["timestamp"] == "2024-04-23T12:34:56Z"
+        assert result["severity"] == "error"
+        assert result["host"] == "server1"
+
+    def test_json_log_parser_skips_cloudtrail(self):
+        from parsers.json_log_parser import parse_json_log
+        line = '{"eventVersion":"1.08","eventTime":"2024-04-23T12:34:56Z","eventName":"ConsoleLogin"}'
+        result = parse_json_log(line)
+        assert result is None
+
+    def test_json_log_parser_invalid(self):
+        from parsers.json_log_parser import parse_json_log
+        assert parse_json_log("not json") is None
+        assert parse_json_log("") is None
+
+    def test_syslog_parser_rfc5424_fallback(self):
+        from parsers.syslog_parser import parse_syslog
+        line = "<14>1 2024-04-23T12:34:56Z myhost myapp 1234 ID47 - Hello RFC 5424 via syslog parser"
+        result = parse_syslog(line)
+        assert result is not None
+        assert result["timestamp"] == "2024-04-23T12:34:56Z"
+        assert result["host"] == "myhost"
+        assert result["format"] == "syslog"
+
+
+class TestDetectFormat:
+    """Tests for format detection."""
+
+    def test_detect_cloudtrail(self):
+        from main import detect_format
+        line = '{"eventVersion":"1.08","eventTime":"2024-04-23T12:34:56Z","eventName":"ConsoleLogin"}'
+        assert detect_format(line) == "cloudtrail"
+
+    def test_detect_json(self):
+        from main import detect_format
+        line = '{"timestamp":"2024-04-23T12:34:56Z","level":"info","message":"hello"}'
+        assert detect_format(line) == "json"
+
+    def test_detect_rfc5424(self):
+        from main import detect_format
+        line = "<14>1 2024-04-23T12:34:56Z myhost myapp 1234 ID47 - hello"
+        assert detect_format(line) == "rfc5424"
+
+    def test_detect_ssh(self):
+        from main import detect_format
+        line = "Apr 23 12:34:56 host sshd: Accepted password for admin from 1.2.3.4 port 22 ssh2"
+        assert detect_format(line) == "ssh"
+
+    def test_detect_auditd(self):
+        from main import detect_format
+        line = 'type=SYSCALL msg=audit(1364481363.243:24287): arch=c000003e'
+        assert detect_format(line) == "auditd"
+
+    def test_detect_firewall(self):
+        from main import detect_format
+        line = 'Apr 23 12:34:56 host kernel: DROP IN=eth0 OUT= SRC=1.2.3.4 DST=10.0.0.1 PROTO=TCP SPT=80 DPT=443'
+        assert detect_format(line) == "firewall"
+
+    def test_detect_web_access(self):
+        from main import detect_format
+        line = '1.2.3.4 - - [10/Oct/2000:13:55:36 -0700] "GET / HTTP/1.0" 200 1234'
+        assert detect_format(line) == "web_access"
+
+    def test_detect_web_error_apache(self):
+        from main import detect_format
+        line = '[Wed Oct 11 14:32:52.123456 2000] [core:error] [pid 1234] [client 1.2.3.4] File not found'
+        assert detect_format(line) == "web_error"
+
+    def test_detect_web_error_nginx(self):
+        from main import detect_format
+        line = '2024/04/23 12:34:56 [error] 1234#5678: *99 connect() failed'
+        assert detect_format(line) == "web_error"
+
+    def test_detect_rfc3164_syslog(self):
+        from main import detect_format
+        line = "Apr 23 12:34:56 myhost kernel: [12345.678901] CPU0: Core temperature above threshold"
+        assert detect_format(line) == "syslog"
+
+    def test_detect_auth(self):
+        from main import detect_format
+        line = "Apr 23 12:34:56 myhost login: session opened for user root"
+        assert detect_format(line) == "auth"
+
+    def test_detect_unknown(self):
+        from main import detect_format
+        assert detect_format("random garbage text") is None
+
 
 class TestDetection:
     """Tests for detection checks."""

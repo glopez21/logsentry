@@ -21,6 +21,12 @@ from parsers.syslog_parser import parse_syslog
 from parsers.ssh_parser import parse_ssh_log
 from parsers.auth_parser import parse_auth_log
 from parsers.cloudtrail_parser import parse_cloudtrail, detect_cloudtrail
+from parsers.rfc5424_parser import parse_rfc5424
+from parsers.web_access_parser import parse_web_access
+from parsers.web_error_parser import parse_web_error
+from parsers.auditd_parser import parse_auditd
+from parsers.firewall_parser import parse_firewall
+from parsers.json_log_parser import parse_json_log
 from detection.detection_checks import run_detection_checks
 from output.formatter import format_output
 from output.advanced import (
@@ -36,25 +42,67 @@ LOG_PARSERS = {
     "ssh": parse_ssh_log,
     "auth": parse_auth_log,
     "cloudtrail": parse_cloudtrail,
+    "rfc5424": parse_rfc5424,
+    "web_access": parse_web_access,
+    "web_error": parse_web_error,
+    "auditd": parse_auditd,
+    "firewall": parse_firewall,
+    "json": parse_json_log,
 }
 
 
 def detect_format(log_line: str) -> Optional[str]:
     """Auto-detect log format from line content."""
-    # Check for CloudTrail JSON first
+    # CloudTrail JSON (specific schema)
     if detect_cloudtrail(log_line):
         return "cloudtrail"
-    
+
+    # Generic JSON (non-CloudTrail)
+    if log_line.strip().startswith("{"):
+        return "json"
+
+    # RFC 5424 syslog (<pri>version ISO-timestamp ...)
+    if re.match(r"^<\d{1,3}>\d+\s+\d{4}-\d{2}-\d{2}T", log_line):
+        return "rfc5424"
+
+    # SSH auth
     if "sshd" in log_line and ("Accepted" in log_line or "Failed" in log_line or "Invalid" in log_line):
         return "ssh"
     if "ssh" in log_line.lower() and ("session" in log_line.lower() or "login" in log_line.lower()):
         return "ssh"
+
+    # auditd (type=XXXX msg=audit(...):)
+    if re.match(r"^type=\S+\s+msg=audit\(", log_line):
+        return "auditd"
+
+    # iptables kernel log (contains IN= OUT= SRC= etc.)
+    if " IN=" in log_line or "kernel:" in log_line and ("SRC=" in log_line or "DST=" in log_line):
+        return "firewall"
+    if "firewalld[" in log_line:
+        return "firewall"
+
+    # Web access log (Apache/Nginx combined/common format)
+    if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+\S+\s+\S+\s+\[', log_line):
+        return "web_access"
+
+    # Web error log (Apache: [Day Mon DD HH:MM:SS.mmmmmm YYYY] [module:severity] ...)
+    if re.match(r"^\[\w{3}\s+\w{3}\s+\d{2}\s+\d{2}:\d{2}:\d{2}\.\d+\s+\d{4}\]\s+\[", log_line):
+        return "web_error"
+    if re.match(r"\d{4}/\d{2}/\d{2}\s+\d{2}:\d{2}:\d{2}\s+\[\w+\]\s+\d+#\d+:", log_line):
+        return "web_error"
+    if re.match(r"\d{4}/\d{2}/\d{2}\s+\d{2}:\d{2}:\d{2}\s+\[\w+\]\s+\d+#\d+:", log_line):
+        return "web_error"
+
+    # RFC 3164 syslog
     if re.match(r"^\w{3}\s+\d+\s+\d+:\d+:\d+", log_line):
         if "session" in log_line.lower() or "password" in log_line.lower():
             return "auth"
         return "syslog"
+
+    # Auth keywords fallback
     if re.search(r"(Failed|password|authentication|session)", log_line, re.I):
         return "auth"
+
     return None
 
 

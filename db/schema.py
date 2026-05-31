@@ -72,8 +72,8 @@ CREATE TABLE IF NOT EXISTS logsentry.threat_intel_cache (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     ttl_seconds INT NOT NULL DEFAULT 86400
 );
-CREATE INDEX IF NOT EXISTS idx_threat_intel_expires
-    ON logsentry.threat_intel_cache (updated_at + (ttl_seconds * interval '1 second'));
+-- Skip: expression index on (updated_at + ttl_seconds * interval) causes
+-- syntax issues on some PostgreSQL versions. Expiry is checked in queries.
 
 -- 9. Shared cross-project tables
 CREATE TABLE IF NOT EXISTS shared.hosts (

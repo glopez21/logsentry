@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-"""Syslog parser for standard syslog format."""
-
 import re
 
 
@@ -37,50 +34,74 @@ MITRE_TACTICS = {
     "T1112": "Archive Data",
 }
 
+RFC3164_RE = re.compile(
+    r"^(\w{3}\s+\d+\s+\d+:\d+:\d+)\s+(\S+)\s+(\S+?)(?:\[(\d+)\])?:\s*(.*)$"
+)
+RFC5424_RE = re.compile(
+    r"^<\d{1,3}>\d+\s+"
+    r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))"
+    r"\s+(\S+)"
+    r"\s+(\S+)"
+    r"\s+(\S+)"
+    r"\s+(\S+)"
+    r"\s+(?:\[.*?\]|-)\s+"
+    r"(.*)$"
+)
+
 
 def parse_syslog(line: str) -> dict | None:
-    """Parse a syslog line and extract key fields."""
     tactic_match = re.search(r'\[TACTIC:([A-Z0-9]+)\]', line)
     mitre_tactic = tactic_match.group(1) if tactic_match else ""
-    
+
     clean_line = re.sub(r'\[TACTIC:[A-Z0-9]+\]', '', line)
-    pattern = r"^(\w{3}\s+\d+\s+\d+:\d+:\d+)\s+(\S+)\s+(\S+?)(?:\[(\d+)\])?:\s*(.*)$"
-    match = re.match(pattern, clean_line)
+    m = RFC3164_RE.match(clean_line)
+    if m:
+        timestamp, host, process, pid, message = m.groups()
+        return {
+            "timestamp": timestamp,
+            "host": host,
+            "user": _extract_user(message),
+            "source_ip": _extract_ip(message, "src"),
+            "destination_ip": _extract_ip(message, "dst"),
+            "event_type": "syslog",
+            "process": process,
+            "pid": pid or "",
+            "raw_message": message.strip(),
+            "mitre_tactic": mitre_tactic,
+            "mitre_technique": MITRE_TACTICS.get(mitre_tactic, ""),
+            "format": "syslog",
+        }
 
-    if not match:
-        return None
+    m = RFC5424_RE.match(clean_line)
+    if m:
+        timestamp, host, appname, procid, msgid, message = m.groups()
+        return {
+            "timestamp": timestamp,
+            "host": host,
+            "user": _extract_user(message),
+            "source_ip": _extract_ip(message, "src"),
+            "destination_ip": _extract_ip(message, "dst"),
+            "event_type": "syslog",
+            "process": appname or "",
+            "pid": procid or "",
+            "raw_message": message.strip(),
+            "mitre_tactic": mitre_tactic,
+            "mitre_technique": MITRE_TACTICS.get(mitre_tactic, ""),
+            "format": "syslog",
+        }
 
-    timestamp, host, process, pid, message = match.groups()
-    event_type = "syslog"
-    src_ip = extract_ip(message, "src")
-    dst_ip = extract_ip(message, "dst")
-
-    return {
-        "timestamp": timestamp,
-        "host": host,
-        "user": extract_user(message),
-        "source_ip": src_ip,
-        "destination_ip": dst_ip,
-        "event_type": event_type,
-        "process": process,
-        "pid": pid,
-        "raw_message": message.strip(),
-        "mitre_tactic": mitre_tactic,
-        "mitre_technique": MITRE_TACTICS.get(mitre_tactic, ""),
-    }
+    return None
 
 
-def extract_ip(text: str, direction: str = "src") -> str:
-    """Extract IP address from text."""
+def _extract_ip(text: str, direction: str = "src") -> str:
     pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
-    matches: list[str] = re.findall(pattern, text)
+    matches = re.findall(pattern, text)
     if not matches:
         return ""
     return matches[0] if direction == "src" else matches[-1]
 
 
-def extract_user(message: str) -> str:
-    """Extract username from message."""
+def _extract_user(message: str) -> str:
     patterns = [
         r"user=(\S+)",
         r"for\s+(\S+)\s+from",
