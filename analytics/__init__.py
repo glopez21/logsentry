@@ -1,25 +1,10 @@
-#!/usr/bin/env python3
 """Anomaly detection using statistical analysis."""
 
 from dataclasses import dataclass, field
 from collections import defaultdict
 import statistics
 
-
-@dataclass
-class Baseline:
-    """Statistical baseline for comparison."""
-    metric: str
-    mean: float = 0.0
-    std_dev: float = 0.0
-    min_val: float = 0.0
-    max_val: float = 0.0
-    median: float = 0.0
-    p95: float = 0.0
-    p99: float = 0.0
-    sample_count: int = 0
-    period_start: str = ""
-    period_end: str = ""
+from _constants import Baseline
 
 
 @dataclass
@@ -35,7 +20,7 @@ class Anomaly:
     timestamp: str = ""
 
 
-@dataclass 
+@dataclass
 class AnomalyReport:
     """Full anomaly detection report."""
     baseline: dict[str, Baseline]

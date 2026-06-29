@@ -1,4 +1,4 @@
-"""PostgreSQL storage layer with connection pooling, insert, and query."""
+"""PostgreSQL storage layer with sync (psycopg2) and async (asyncpg) support."""
 
 from __future__ import annotations
 
@@ -12,6 +12,12 @@ import psycopg2.pool
 import psycopg2.extras
 
 logger = logging.getLogger("logsentry.db")
+
+
+try:
+    import asyncpg
+except ImportError:
+    asyncpg = None  # type: ignore[assignment]
 
 
 class LogStore:
@@ -451,3 +457,301 @@ class LogStore:
             raise
         finally:
             self.put_conn(conn)
+
+
+class AsyncLogStore:
+    """Async PostgreSQL storage using asyncpg. Mirrors LogStore interface."""
+
+    def __init__(
+        self,
+        dsn: str,
+        min_conn: int = 2,
+        max_conn: int = 10,
+        batch_size: int = 500,
+        flush_interval: float = 5.0,
+    ):
+        if asyncpg is None:
+            raise RuntimeError("asyncpg not installed. Install with: pip install 'logsentry[async]'")
+        self.dsn = dsn
+        self.batch_size = batch_size
+        self.flush_interval = flush_interval
+        self._pool: asyncpg.Pool | None = None
+
+    async def connect(self) -> None:
+        self._pool = await asyncpg.create_pool(
+            dsn=self.dsn,
+            min_size=self.min_conn,
+            max_size=self.max_conn,
+        )
+        logger.info("Connected to Postgres (async pool=%s-%s)", self.min_conn, self.max_conn)
+
+    @property
+    def min_conn(self) -> int:
+        return self._pool._min_size if self._pool else 2  # type: ignore[union-attr]
+
+    @property
+    def max_conn(self) -> int:
+        return self._pool._max_size if self._pool else 10  # type: ignore[union-attr]
+
+    async def close(self) -> None:
+        if self._pool:
+            await self._pool.close()
+            self._pool = None
+            logger.info("Async Postgres pool closed")
+
+    async def init_schema(self) -> None:
+        from db.schema import get_all_sql
+        if not self._pool:
+            return
+        async with self._pool.acquire() as conn:
+            for block in get_all_sql():
+                await conn.execute(block)
+        logger.info("Async schema initialized")
+
+    async def ensure_partition(self, ts: datetime) -> None:
+        suffix = ts.strftime("%Y_%m")
+        if not self._pool:
+            return
+        async with self._pool.acquire() as conn:
+            await conn.execute("SELECT logsentry.create_partition($1)", suffix)
+
+    async def enforce_retention(self, days: int = 90) -> int:
+        if not self._pool:
+            return 0
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchval("SELECT logsentry.drop_old_partitions($1)", days)
+            return row or 0
+
+    async def insert_log(self, **kwargs: Any) -> int:
+        ts = kwargs.get("timestamp", datetime.now(timezone.utc))
+        await self.ensure_partition(ts)
+        if not self._pool:
+            raise RuntimeError("Not connected")
+        async with self._pool.acquire() as conn:
+            row_id = await conn.fetchval(
+                """
+                INSERT INTO logsentry.logs
+                    (timestamp, labels, source, format, parsed, message,
+                     severity, mitre_id, host, source_ip, user_name,
+                     event_type, raw_message)
+                VALUES ($1, $2::jsonb, $3, $4, $5::jsonb, $6, $7, $8::text[], $9, $10, $11, $12, $13)
+                RETURNING id
+                """,
+                ts,
+                json.dumps(kwargs.get("labels", {})),
+                kwargs.get("source", "syslog"),
+                kwargs.get("format", "syslog"),
+                json.dumps(kwargs["parsed"]) if kwargs.get("parsed") else None,
+                kwargs.get("message", ""),
+                kwargs.get("severity", "info"),
+                kwargs.get("mitre_id", []),
+                kwargs.get("host", ""),
+                kwargs.get("source_ip", ""),
+                kwargs.get("user_name", ""),
+                kwargs.get("event_type", ""),
+                kwargs.get("raw_message", ""),
+            )
+            return int(row_id) if row_id is not None else 0
+
+    async def insert_logs_batch(self, records: list[dict]) -> int:
+        if not records or not self._pool:
+            return 0
+
+        seen_months: set[str] = set()
+        for r in records:
+            ts = r.get("timestamp")
+            if ts:
+                suffix = ts.strftime("%Y_%m")
+                if suffix not in seen_months:
+                    await self.ensure_partition(ts)
+                    seen_months.add(suffix)
+
+        async with self._pool.acquire() as conn:
+            rows = []
+            for r in records:
+                ts = r.get("timestamp", datetime.now(timezone.utc))
+                rows.append((
+                    ts,
+                    json.dumps(r.get("labels", {})),
+                    r.get("source", "syslog"),
+                    r.get("format", "syslog"),
+                    json.dumps(r["parsed"]) if r.get("parsed") else None,
+                    r.get("message", ""),
+                    r.get("severity", "info"),
+                    r.get("mitre_id", []),
+                    r.get("host", ""),
+                    r.get("source_ip", ""),
+                    r.get("user_name", ""),
+                    r.get("event_type", ""),
+                    r.get("raw_message", ""),
+                ))
+            await conn.executemany(
+                """
+                INSERT INTO logsentry.logs
+                    (timestamp, labels, source, format, parsed, message,
+                     severity, mitre_id, host, source_ip, user_name,
+                     event_type, raw_message)
+                VALUES ($1, $2::jsonb, $3, $4, $5::jsonb, $6, $7, $8::text[], $9, $10, $11, $12, $13)
+                """,
+                rows,
+            )
+            return len(rows)
+
+    async def query(
+        self,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        labels: dict | None = None,
+        severity: str | None = None,
+        source_ip: str | None = None,
+        event_type: str | None = None,
+        search: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[dict]:
+        if not self._pool:
+            return []
+        conditions: list[str] = []
+        params: list[Any] = []
+        idx = 1
+
+        if since:
+            conditions.append(f"timestamp >= ${idx}")
+            params.append(since)
+            idx += 1
+        if until:
+            conditions.append(f"timestamp <= ${idx}")
+            params.append(until)
+            idx += 1
+        if severity:
+            conditions.append(f"severity = ${idx}")
+            params.append(severity)
+            idx += 1
+        if source_ip:
+            conditions.append(f"source_ip = ${idx}")
+            params.append(source_ip)
+            idx += 1
+        if event_type:
+            conditions.append(f"event_type = ${idx}")
+            params.append(event_type)
+            idx += 1
+        if labels:
+            conditions.append(f"labels @> ${idx}::jsonb")
+            params.append(json.dumps(labels))
+            idx += 1
+        if search:
+            conditions.append(
+                f"to_tsvector('english', coalesce(message, '')) @@ plainto_tsquery('english', ${idx})"
+            )
+            params.append(search)
+            idx += 1
+
+        where = " AND ".join(conditions) if conditions else "TRUE"
+        params.append(limit)
+        params.append(offset)
+
+        sql = f"""
+            SELECT id, timestamp, labels, source, format, parsed, message,
+                   severity, mitre_id, host, source_ip, user_name, event_type
+            FROM logsentry.logs
+            WHERE {where}
+            ORDER BY timestamp DESC
+            LIMIT ${idx} OFFSET ${idx + 1}
+        """
+
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(sql, *params)
+            return [dict(r) for r in rows]
+
+    async def insert_detection(self, **kwargs: Any) -> int:
+        if not self._pool:
+            raise RuntimeError("Not connected")
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchval(
+                """
+                INSERT INTO logsentry.detections
+                    (log_id, rule_name, rule_type, severity, mitre_id,
+                     mitre_tactic, description, raw_data)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
+                RETURNING id
+                """,
+                kwargs.get("log_id"),
+                kwargs.get("rule_name", ""),
+                kwargs.get("rule_type", "builtin"),
+                kwargs.get("severity", "medium"),
+                kwargs.get("mitre_id"),
+                kwargs.get("mitre_tactic"),
+                kwargs.get("description", ""),
+                json.dumps(kwargs["raw_data"]) if kwargs.get("raw_data") else None,
+            )
+            return int(row) if row is not None else 0
+
+    async def get_threat_intel(self, ip: str) -> dict | None:
+        if not self._pool:
+            return None
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT data FROM logsentry.threat_intel_cache
+                WHERE ip = $1
+                  AND updated_at + (ttl_seconds * interval '1 second') > now()
+                """,
+                ip,
+            )
+            return json.loads(row["data"]) if row else None
+
+    async def set_threat_intel(self, ip: str, data: dict, ttl: int = 86400) -> None:
+        if not self._pool:
+            return
+        async with self._pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO logsentry.threat_intel_cache (ip, data, ttl_seconds)
+                VALUES ($1, $2::jsonb, $3)
+                ON CONFLICT (ip) DO UPDATE
+                    SET data = EXCLUDED.data, updated_at = now(), ttl_seconds = EXCLUDED.ttl_seconds
+                """,
+                ip,
+                json.dumps(data),
+                ttl,
+            )
+
+    async def get_stats(self) -> dict:
+        if not self._pool:
+            return {"error": "not connected"}
+        async with self._pool.acquire() as conn:
+            total = await conn.fetchval("SELECT count(*) FROM logsentry.logs")
+            sev_rows = await conn.fetch(
+                "SELECT severity, count(*) AS cnt FROM logsentry.logs GROUP BY severity"
+            )
+            by_severity = {r["severity"]: r["cnt"] for r in sev_rows}
+            detections = await conn.fetchval("SELECT count(*) FROM logsentry.detections")
+            detections_24h = await conn.fetchval(
+                "SELECT count(*) FROM logsentry.detections WHERE created_at >= now() - interval '24 hours'"
+            )
+            return {
+                "total_logs": total,
+                "by_severity": by_severity,
+                "total_detections": detections,
+                "detections_24h": detections_24h,
+            }
+
+    async def upsert_host(self, hostname: str, ip_address: str = "", role: str = "", labels: dict | None = None) -> None:
+        if not self._pool:
+            return
+        async with self._pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO shared.hosts (hostname, ip_address, role, labels)
+                VALUES ($1, $2, $3, $4::jsonb)
+                ON CONFLICT (hostname) DO UPDATE
+                    SET ip_address = EXCLUDED.ip_address,
+                        role = CASE WHEN EXCLUDED.role != '' THEN EXCLUDED.role ELSE shared.hosts.role END,
+                        labels = shared.hosts.labels || EXCLUDED.labels,
+                        updated_at = now()
+                """,
+                hostname,
+                ip_address,
+                role,
+                json.dumps(labels or {}),
+            )

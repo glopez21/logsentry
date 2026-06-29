@@ -1,53 +1,64 @@
-"""LogSentry Engine Daemon — persistent log ingestion, storage, and detection."""
+"""LogSentry Engine Daemon — async-first persistent log ingestion, storage, and detection."""
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import signal
-import threading
-import time
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from db import LogStore
+from db.store import LogStore, AsyncLogStore
 from notifiers import DiscordNotifier, SlackNotifier, TelegramNotifier
 from notifiers.base import AlertMessage
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+    force=True,
+)
 logger = logging.getLogger("logsentry.daemon")
 
 
 class LogSentryDaemon:
-    """Main engine loop: ingest → store → detect."""
+    """Main engine loop with asyncio orchestration and optional asyncpg."""
 
     def __init__(self, config: dict[str, Any]):
         self.config = config
         self._running = False
-        self._threads: list[threading.Thread] = []
+        self._tasks: list[asyncio.Task] = []
+        self._loop: asyncio.AbstractEventLoop | None = None
 
-        # Storage
         storage_cfg = config["storage"]
-        self.store = LogStore(
-            dsn=storage_cfg["dsn"],
-            min_conn=storage_cfg.get("pool_min", 2),
-            max_conn=storage_cfg.get("pool_max", 10),
-            batch_size=storage_cfg.get("batch_size", 500),
-            flush_interval=storage_cfg.get("flush_interval", 5),
-        )
+        use_async = storage_cfg.get("async", False)
 
-        # Ingest components (lazy init)
+        if use_async:
+            self.store: LogStore | AsyncLogStore = AsyncLogStore(
+                dsn=storage_cfg["dsn"],
+                min_conn=storage_cfg.get("pool_min", 2),
+                max_conn=storage_cfg.get("pool_max", 10),
+                batch_size=storage_cfg.get("batch_size", 500),
+                flush_interval=storage_cfg.get("flush_interval", 5),
+            )
+        else:
+            self.store = LogStore(
+                dsn=storage_cfg["dsn"],
+                min_conn=storage_cfg.get("pool_min", 2),
+                max_conn=storage_cfg.get("pool_max", 10),
+                batch_size=storage_cfg.get("batch_size", 500),
+                flush_interval=storage_cfg.get("flush_interval", 5),
+            )
+
         self._syslog_listener: Any = None
         self._http_server: Any = None
         self._file_watchers: list[Any] = []
 
-        # Detection pipeline
         self._detection_interval = config["engine"].get("detection_interval", 30)
         self._stats_interval = config["engine"].get("stats_interval", 60)
-
-        # Alert rules
         self._alert_rules: list[dict] = config["detection"].get("rules", []) or []
 
-        # Notifiers
         self._notifiers: list[Any] = []
         alert_cfg = config["detection"].get("alerts", {})
         if alert_cfg.get("discord", {}).get("webhook_url"):
@@ -59,13 +70,11 @@ class LogSentryDaemon:
         if self._notifiers:
             logger.info("Initialized %s notifiers", len(self._notifiers))
 
-        # Augur hub integration
         self._augur_client: Any = None
         augur_cfg = config.get("augur", {})
         if augur_cfg.get("enabled") and augur_cfg.get("hub_url"):
             try:
                 from augur_client import AugurClient
-
                 self._augur_client = AugurClient(
                     hub_url=augur_cfg["hub_url"],
                     agent_name=augur_cfg.get("agent_name", "logsentry"),
@@ -79,33 +88,67 @@ class LogSentryDaemon:
             except Exception as e:
                 logger.warning("Augur client init failed: %s", e)
 
-        signal.signal(signal.SIGINT, self._signal_handler)
-        signal.signal(signal.SIGTERM, self._signal_handler)
-
     # ── Lifecycle ─────────────────────────────────────────────────
 
     def start(self) -> None:
-        """Start the daemon — connect DB, start ingest, run pipeline."""
+        """Run the daemon — starts the asyncio event loop."""
+        self._loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self._loop)
+
+        # Install signal handlers
+        def _make_handler(sig_num: int):
+            return lambda: self._signal_handler(sig_num, None)
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            try:
+                self._loop.add_signal_handler(sig, _make_handler(sig))
+            except (ValueError, NotImplementedError):
+                signal.signal(sig, lambda s, f: self._signal_handler(s, f))
+
+        try:
+            self._loop.run_until_complete(self._async_start())
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self._loop.run_until_complete(self._async_stop())
+            self._loop.close()
+
+    async def _async_start(self) -> None:
+        """Async start routine."""
         self._running = True
+        self._tasks = []
 
         # 1. Connect to Postgres
         logger.info("Connecting to Postgres...")
-        self.store.connect()
+        if isinstance(self.store, AsyncLogStore):
+            await self.store.connect()
+        else:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self.store.connect)
 
         # 2. Initialize schema
         logger.info("Initializing schema...")
-        self.store.init_schema()
+        if isinstance(self.store, AsyncLogStore):
+            await self.store.init_schema()
+        else:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self.store.init_schema)
 
-        # 3. Enforce retention on startup
+        # 3. Enforce retention
         retention = self.config["storage"].get("retention_days", 90)
-        dropped = self.store.enforce_retention(retention)
+        if isinstance(self.store, AsyncLogStore):
+            dropped = await self.store.enforce_retention(retention)
+        else:
+            loop = asyncio.get_event_loop()
+            dropped = await loop.run_in_executor(
+                None, self.store.enforce_retention, retention
+            )
         if dropped:
             logger.info("Cleaned %s old partitions", dropped)
 
         # 4. Start ingest collectors
-        self._start_ingest()
+        await self._start_ingest()
 
-        # 5. Register with Augur hub and start heartbeat
+        # 5. Register with Augur hub
         if self._augur_client:
             try:
                 self._augur_client.register(
@@ -117,27 +160,38 @@ class LogSentryDaemon:
             except Exception as e:
                 logger.warning("Augur registration failed: %s", e)
 
-        # 6. Start stats reporter
-        t = threading.Thread(target=self._stats_loop, daemon=True)
-        t.start()
-        self._threads.append(t)
+        # 6. Stats reporter task
+        self._tasks.append(asyncio.create_task(self._stats_loop()))
 
-        # 7. Start detection pipeline
+        # 7. Detection pipeline task
         if self.config["detection"].get("enabled", True):
-            t = threading.Thread(target=self._detection_loop, daemon=True)
-            t.start()
-            self._threads.append(t)
+            self._tasks.append(asyncio.create_task(self._detection_loop()))
 
         logger.info("Daemon started — ingesting, storing, detecting")
 
-        # 8. Block until signal
+        # 8. Keep running
+        await self._wait_for_shutdown()
+
+    async def _wait_for_shutdown(self) -> None:
+        """Wait until stop is requested."""
         while self._running:
-            time.sleep(1)
+            await asyncio.sleep(1)
 
     def stop(self) -> None:
-        """Graceful shutdown."""
-        logger.info("Shutting down...")
+        """Request graceful shutdown."""
         self._running = False
+        if self._loop and self._loop.is_running():
+            self._loop.call_soon_threadsafe(self._loop.stop)
+
+    async def _async_stop(self) -> None:
+        """Async shutdown."""
+        logger.info("Shutting down...")
+
+        # Cancel background tasks
+        for t in self._tasks:
+            t.cancel()
+        if self._tasks:
+            await asyncio.gather(*self._tasks, return_exceptions=True)
 
         # Stop Augur heartbeat
         if self._augur_client:
@@ -155,7 +209,10 @@ class LogSentryDaemon:
 
         # Close DB
         try:
-            self.store.close()
+            if isinstance(self.store, AsyncLogStore):
+                await self.store.close()
+            else:
+                await asyncio.get_event_loop().run_in_executor(None, self.store.close)
         except Exception:
             pass
 
@@ -163,50 +220,47 @@ class LogSentryDaemon:
 
     def _signal_handler(self, signum, frame) -> None:
         """Handle shutdown signals."""
-        print()  # clear ^C line
+        print()
+        logger.info("Received signal %s, shutting down...", signum)
         self.stop()
 
     # ── Ingest ────────────────────────────────────────────────────
 
-    def _start_ingest(self) -> None:
+    async def _start_ingest(self) -> None:
         """Start configured ingest sources."""
         ingest_cfg = self.config["ingest"]
 
-        # Syslog listener
-        syslog_cfg = ingest_cfg.get("syslog", {})
-        if syslog_cfg.get("enabled"):
-            self._start_syslog(syslog_cfg)
+        if ingest_cfg.get("syslog", {}).get("enabled"):
+            await self._start_syslog(ingest_cfg["syslog"])
 
-        # File watchers (if paths configured)
         file_cfg = ingest_cfg.get("file_watchers", {})
         if file_cfg.get("enabled") and file_cfg.get("paths"):
-            self._start_file_watchers(file_cfg["paths"])
+            await self._start_file_watchers(file_cfg["paths"])
 
-    def _start_syslog(self, cfg: dict) -> None:
-        """Start syslog UDP/TCP listener in a thread."""
+    async def _start_syslog(self, cfg: dict) -> None:
+        """Start syslog listener in executor thread."""
         from collector.syslog import SyslogListener
 
-        listen_port = cfg.get("port", 514)
-        listen_proto = cfg.get("protocol", "udp")
-        listen_bind = cfg.get("bind", "0.0.0.0")
-
         listener = SyslogListener(
-            port=listen_port,
-            protocol=listen_proto,
+            port=cfg.get("port", 514),
+            protocol=cfg.get("protocol", "udp"),
             parser=self._parse_line,
             callback=self._syslog_callback,
-            bind_address=listen_bind,
+            bind_address=cfg.get("bind", "0.0.0.0"),
         )
 
-        t = threading.Thread(target=listener.start, daemon=True)
-        t.start()
+        loop = asyncio.get_event_loop()
+        self._tasks.append(
+            asyncio.ensure_future(loop.run_in_executor(None, listener.start))
+        )
         self._syslog_listener = listener
         logger.info(
-            "Syslog listener started: %s:%s/%s", listen_bind, listen_port, listen_proto
+            "Syslog listener started: %s:%s/%s",
+            cfg.get("bind", "0.0.0.0"), cfg.get("port", 514), cfg.get("protocol", "udp"),
         )
 
-    def _start_file_watchers(self, paths: list[str]) -> None:
-        """Watch directories for .log files."""
+    async def _start_file_watchers(self, paths: list[str]) -> None:
+        """Watch directories for .log files via executor."""
         from collector.file_tail import FileTailCollector
 
         def discover_log_files(base_dirs: list[str]) -> list[str]:
@@ -220,20 +274,22 @@ class LogSentryDaemon:
             return sorted(files)
 
         log_files = discover_log_files(paths)
-        for fp in log_files[:50]:  # limit to prevent overload
+        loop = asyncio.get_event_loop()
+
+        for fp in log_files[:50]:
             collector = FileTailCollector(
                 filepath=fp,
                 parser=self._parse_line,
                 callback=self._file_watcher_callback,
             )
-            t = threading.Thread(target=collector.start, args=(False,), daemon=True)
-            t.start()
+            self._tasks.append(
+                asyncio.ensure_future(loop.run_in_executor(None, collector.start, False))
+            )
             self._file_watchers.append(collector)
 
         logger.info("Watching %s log files", len(log_files))
 
     def _parse_line(self, line: str) -> Optional[dict]:
-        """Parse a single log line (inline to avoid circular import)."""
         from main import detect_format, LOG_PARSERS
 
         detected = detect_format(line)
@@ -247,87 +303,120 @@ class LogSentryDaemon:
         return None
 
     def _syslog_callback(self, message: str, record: Optional[dict], source: tuple) -> None:
-        """Callback for syslog messages — store in DB."""
         self._store_record(record, message, source="syslog", host=source[0] if source else "")
 
     def _file_watcher_callback(self, line: str, record: Optional[dict]) -> None:
-        """Callback for file watcher — store in DB."""
         self._store_record(record, line, source="file")
 
     def _store_record(
         self, record: Optional[dict], raw_message: str, source: str = "syslog", host: str = ""
     ) -> None:
-        """Parse and store a log record to Postgres."""
+        """Parse and store a log record to Postgres. Runs synchronously from collector callbacks."""
         try:
             if record:
-                self.store.insert_log(
-                    timestamp=record.get("timestamp", datetime.now(timezone.utc)),
-                    message=record.get("message", "") or raw_message,
-                    labels={"source": source, "host": host or record.get("host", "unknown")},
-                    source=source,
-                    format=record.get("format", "syslog"),
-                    host=host or record.get("host", ""),
-                    source_ip=record.get("source_ip", ""),
-                    user_name=record.get("user", ""),
-                    event_type=record.get("event_type", ""),
-                    severity=record.get("severity", "info"),
-                    parsed=record,
-                    mitre_id=(
-                        [record["mitre_tactic"]]
-                        if record.get("mitre_tactic")
-                        else []
-                    ),
-                    raw_message=raw_message,
-                )
-
-                # Auto-register host
-                hostname = host or record.get("host", "")
-                src_ip = record.get("source_ip", "")
-                if hostname:
-                    try:
-                        self.store.upsert_host(
-                            hostname=hostname,
-                            ip_address=src_ip,
-                            role="",
-                            labels={"source": source, "auto_discovered": "true"},
-                        )
-                    except Exception:
-                        pass
-            else:
-                # Store raw unparsed line
-                self.store.insert_log(
-                    timestamp=datetime.now(timezone.utc),
-                    message=raw_message,
-                    labels={"source": source, "host": host or "unknown"},
-                    source=source,
-                    format="raw",
-                    raw_message=raw_message,
-                )
+                if isinstance(self.store, AsyncLogStore):
+                    # Schedule async insert from sync callback
+                    asyncio.run_coroutine_threadsafe(
+                        self._async_store_record(record, raw_message, source, host),
+                        self._loop or asyncio.get_event_loop(),
+                    )
+                else:
+                    self._sync_store_record(record, raw_message, source, host)
         except Exception as e:
             logger.warning("Failed to store log: %s", e)
 
+    def _sync_store_record(self, record: dict, raw_message: str, source: str, host: str) -> None:
+        self.store.insert_log(
+            timestamp=record.get("timestamp", datetime.now(timezone.utc)),
+            message=record.get("message", "") or raw_message,
+            labels={"source": source, "host": host or record.get("host", "unknown")},
+            source=source,
+            format=record.get("format", "syslog"),
+            host=host or record.get("host", ""),
+            source_ip=record.get("source_ip", ""),
+            user_name=record.get("user", ""),
+            event_type=record.get("event_type", ""),
+            severity=record.get("severity", "info"),
+            parsed=record,
+            mitre_id=(
+                [record["mitre_tactic"]] if record.get("mitre_tactic") else []
+            ),
+            raw_message=raw_message,
+        )
+        hostname = host or record.get("host", "")
+        src_ip = record.get("source_ip", "")
+        if hostname:
+            try:
+                self.store.upsert_host(
+                    hostname=hostname,
+                    ip_address=src_ip,
+                    role="",
+                    labels={"source": source, "auto_discovered": "true"},
+                )
+            except Exception:
+                pass
+
+    async def _async_store_record(self, record: dict, raw_message: str, source: str, host: str) -> None:
+        store = self.store
+        if not isinstance(store, AsyncLogStore):
+            return
+        await store.insert_log(
+            timestamp=record.get("timestamp", datetime.now(timezone.utc)),
+            message=record.get("message", "") or raw_message,
+            labels={"source": source, "host": host or record.get("host", "unknown")},
+            source=source,
+            format=record.get("format", "syslog"),
+            host=host or record.get("host", ""),
+            source_ip=record.get("source_ip", ""),
+            user_name=record.get("user", ""),
+            event_type=record.get("event_type", ""),
+            severity=record.get("severity", "info"),
+            parsed=record,
+            mitre_id=(
+                [record["mitre_tactic"]] if record.get("mitre_tactic") else []
+            ),
+            raw_message=raw_message,
+        )
+        hostname = host or record.get("host", "")
+        src_ip = record.get("source_ip", "")
+        if hostname:
+            try:
+                await store.upsert_host(
+                    hostname=hostname,
+                    ip_address=src_ip,
+                    role="",
+                    labels={"source": source, "auto_discovered": "true"},
+                )
+            except Exception:
+                pass
+
     # ── Detection Pipeline ────────────────────────────────────────
 
-    def _detection_loop(self) -> None:
-        """Periodically run detection on recent logs."""
+    async def _detection_loop(self) -> None:
+        """Periodically run detection on recent logs (async)."""
         last_check = datetime.now(timezone.utc)
 
         while self._running:
             try:
                 now = datetime.now(timezone.utc)
-                recent = self.store.query(
-                    since=last_check,
-                    limit=5000,
-                )
+                if isinstance(self.store, AsyncLogStore):
+                    recent = await self.store.query(since=last_check, limit=5000)
+                else:
+                    loop = asyncio.get_event_loop()
+                    recent = await loop.run_in_executor(
+                        None, self.store.query, last_check, None, None, None, None, None, None, 5000, 0
+                    )
                 if recent:
-                    self._run_detections(recent)
+                    await self._run_detections(recent)
                 last_check = now
-                time.sleep(self._detection_interval)
+                await asyncio.sleep(self._detection_interval)
+            except asyncio.CancelledError:
+                break
             except Exception as e:
                 logger.error("Detection loop error: %s", e)
-                time.sleep(self._detection_interval)
+                await asyncio.sleep(self._detection_interval)
 
-    def _run_detections(self, records: list[dict]) -> None:
+    async def _run_detections(self, records: list[dict]) -> None:
         """Apply detection rules to a batch of records."""
         from detection.detection_checks import run_detection_checks
 
@@ -347,17 +436,21 @@ class LogSentryDaemon:
                         elif "exfil" in check_name:
                             severity = "critical"
 
-                        self.store.insert_detection(
-                            log_id=None,
-                            rule_name=check_name,
-                            severity=severity,
-                            description=str(finding),
-                            rule_type="builtin",
-                        )
+                        if isinstance(self.store, AsyncLogStore):
+                            await self.store.insert_detection(
+                                log_id=None, rule_name=check_name,
+                                severity=severity, description=str(finding),
+                                rule_type="builtin",
+                            )
+                        else:
+                            loop = asyncio.get_event_loop()
+                            await loop.run_in_executor(
+                                None, self.store.insert_detection,
+                                None, check_name, severity, str(finding), "builtin", None, None, None,
+                            )
 
-                        self._send_alert(
-                            rule_name=check_name,
-                            severity=severity,
+                        await self._send_alert(
+                            rule_name=check_name, severity=severity,
                             description=str(finding),
                         )
                 elif isinstance(findings, dict):
@@ -365,29 +458,30 @@ class LogSentryDaemon:
                         f"{check_name}: {findings.get('unique_count', 0)} tactics, "
                         f"{list(findings.get('tactics', {}).keys())}"
                     )
-                    self.store.insert_detection(
-                        log_id=None,
-                        rule_name=check_name,
-                        severity="medium",
-                        description=description[:500],
-                        rule_type="builtin",
-                    )
-                    self._send_alert(
-                        rule_name=check_name,
-                        severity="medium",
+                    if isinstance(self.store, AsyncLogStore):
+                        await self.store.insert_detection(
+                            log_id=None, rule_name=check_name,
+                            severity="medium", description=description[:500],
+                            rule_type="builtin",
+                        )
+                    else:
+                        loop = asyncio.get_event_loop()
+                        await loop.run_in_executor(
+                            None, self.store.insert_detection,
+                            None, check_name, "medium", description[:500], "builtin", None, None, None,
+                        )
+                    await self._send_alert(
+                        rule_name=check_name, severity="medium",
                         description=description[:500],
                     )
 
-            # Evaluate custom alert rules
             for rule in self._alert_rules:
-                self._evaluate_rule(rule, records)
+                await self._evaluate_rule(rule, records)
 
-            if results:
-                logger.debug("Detection run: %s checks matched", len(results))
         except Exception as e:
             logger.error("Detection error: %s", e)
 
-    def _evaluate_rule(self, rule: dict, records: list[dict]) -> None:
+    async def _evaluate_rule(self, rule: dict, records: list[dict]) -> None:
         """Evaluate a single custom alert rule against records."""
         name = rule.get("name", "unknown")
         condition = rule.get("condition", {})
@@ -408,23 +502,28 @@ class LogSentryDaemon:
             matches.append(r)
 
         if len(matches) >= threshold:
-            self.store.insert_detection(
-                log_id=None,
-                rule_name=name,
-                severity=severity,
-                description=rule.get("description", ""),
-                rule_type="custom",
-            )
-            self._send_alert(
-                rule_name=name,
-                severity=severity,
+            desc = rule.get("description", "")
+            if isinstance(self.store, AsyncLogStore):
+                await self.store.insert_detection(
+                    log_id=None, rule_name=name,
+                    severity=severity, description=desc,
+                    rule_type="custom",
+                )
+            else:
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(
+                    None, self.store.insert_detection,
+                    None, name, severity, desc, "custom", None, None, None,
+                )
+            await self._send_alert(
+                rule_name=name, severity=severity,
                 description=rule.get("description", ""),
                 source_ip=matches[0].get("source_ip", ""),
                 event_type=matches[0].get("event_type", ""),
                 timestamp=str(matches[0].get("timestamp", "")),
             )
 
-    def _send_alert(
+    async def _send_alert(
         self,
         rule_name: str,
         severity: str,
@@ -436,11 +535,9 @@ class LogSentryDaemon:
         """Send alert to all configured notifiers."""
         alert_cfg = self.config["detection"].get("alerts", {})
 
-        # Stdout
         if alert_cfg.get("stdout", True):
             logger.warning("ALERT [%s] %s: %s", severity.upper(), rule_name, description)
 
-        # Webhook
         webhook = alert_cfg.get("webhook", "")
         if webhook:
             try:
@@ -452,7 +549,6 @@ class LogSentryDaemon:
             except Exception:
                 pass
 
-        # Notifier backends
         msg = AlertMessage(
             title=f"LogSentry: {rule_name}",
             description=description,
@@ -468,7 +564,6 @@ class LogSentryDaemon:
             except Exception as e:
                 logger.debug("Notifier error: %s", e)
 
-        # Push to Augur hub
         if self._augur_client:
             try:
                 self._augur_client.push_event(
@@ -486,9 +581,7 @@ class LogSentryDaemon:
             except Exception as e:
                 logger.debug("Augur push failed: %s", e)
 
-        # Emit to n3xusDB event_outbox via n3xuslib
         from n3xus import emit_alert
-
         instance = self.config.get("engine", {}).get("instance", "")
         emit_alert(
             source_instance=instance,
@@ -501,11 +594,15 @@ class LogSentryDaemon:
 
     # ── Stats ─────────────────────────────────────────────────────
 
-    def _stats_loop(self) -> None:
+    async def _stats_loop(self) -> None:
         """Periodically log ingestion statistics."""
         while self._running:
             try:
-                stats = self.store.get_stats()
+                if isinstance(self.store, AsyncLogStore):
+                    stats = await self.store.get_stats()
+                else:
+                    loop = asyncio.get_event_loop()
+                    stats = await loop.run_in_executor(None, self.store.get_stats)
                 if stats and "error" not in stats:
                     logger.info(
                         "Stats | logs: %s | detections: %s (24h: %s) | by severity: %s",
@@ -514,7 +611,9 @@ class LogSentryDaemon:
                         stats.get("detections_24h", 0),
                         stats.get("by_severity", {}),
                     )
-                time.sleep(self._stats_interval)
+                await asyncio.sleep(self._stats_interval)
+            except asyncio.CancelledError:
+                break
             except Exception as e:
                 logger.debug("Stats error: %s", e)
-                time.sleep(self._stats_interval)
+                await asyncio.sleep(self._stats_interval)

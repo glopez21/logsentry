@@ -1,80 +1,14 @@
-#!/usr/bin/env python3
 """Baseline storage system for anomaly detection."""
 
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
 import statistics
 
-
-@dataclass
-class Baseline:
-    """Statistical baseline for metrics."""
-    name: str
-    created_at: str
-    metric: str
-    mean: float = 0.0
-    std_dev: float = 0.0
-    min_val: float = 0.0
-    max_val: float = 0.0
-    median: float = 0.0
-    p95: float = 0.0
-    p99: float = 0.0
-    sample_count: int = 0
-    values: list[float] = field(default_factory=list)
-
-    def to_dict(self) -> dict:
-        return {
-            "name": self.name,
-            "created_at": self.created_at,
-            "metric": self.metric,
-            "mean": self.mean,
-            "std_dev": self.std_dev,
-            "min": self.min_val,
-            "max": self.max_val,
-            "median": self.median,
-            "p95": self.p95,
-            "p99": self.p99,
-            "sample_count": self.sample_count,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> Baseline:
-        return cls(
-            name=data["name"],
-            created_at=data["created_at"],
-            metric=data["metric"],
-            mean=data["mean"],
-            std_dev=data["std_dev"],
-            min_val=data["min"],
-            max_val=data["max"],
-            median=data["median"],
-            p95=data["p95"],
-            p99=data["p99"],
-            sample_count=data["sample_count"],
-            values=data.get("values", [])
-        )
-
-    def compare(self, value: float) -> dict:
-        """Compare a value against this baseline."""
-        if self.std_dev == 0:
-            z_score = 999.0 if value > self.mean * 2 else 0.0
-        else:
-            z_score = (value - self.mean) / self.std_dev
-        
-        is_anomaly = abs(z_score) > 2.0
-        
-        return {
-            "value": value,
-            "z_score": round(z_score, 2),
-            "is_anomaly": is_anomaly,
-            "severity": "high" if abs(z_score) > 3 else "medium" if is_anomaly else "normal",
-            "deviation": value - self.mean,
-        }
+from _constants import Baseline
 
 
 class BaselineStore:

@@ -1,0 +1,28 @@
+# sentry-detect: On-Agent Detection Engine
+#
+# Implements lightweight detection rules that run directly on the
+# agent, without needing to ship data to a central SIEM. This is
+# useful for:
+#   1. Real-time alerting — no network round-trip latency
+#   2. Air-gapped / disconnected environments
+#   3. Reducing hub load by pre-filtering
+#
+# Current rules (all with MITRE ATT&CK mapping):
+#   - SSH brute force (T1110) — burst detection per source IP
+#   - Suspicious IP match (T1078) — known bad IPs
+#   - Privilege escalation (T1548) — sudo failures
+#   - Lateral movement (T1021) — unusual SSH login patterns
+#   - Exfiltration (T1041) — large POST requests
+#
+# The SlidingCounter is a simple time-windowed counter. It doesn't
+# persist across restarts — alerts are transient.
+
+[package]
+name = "sentry-detect"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sentry-core = { path = "../sentry-core" }
+tracing = { workspace = true }
+chrono = { workspace = true }

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %} — Dashboard{% endblock %}
+{% block content %}
+<div class="stat-grid">
+    <div class="card stat"><div class="value">{{ stats.total_logs }}</div><div class="label">Total Logs</div></div>
+    <div class="card stat"><div class="value">{{ stats.total_detections }}</div><div class="label">Detections</div></div>
+    <div class="card stat"><div class="value">{{ stats.detections_24h }}</div><div class="label">Detections (24h)</div></div>
+    <div class="card stat"><div class="value">{{ stats.by_severity | length }}</div><div class="label">Severity Levels</div></div>
+</div>
+
+<div class="card">
+    <h2>Logs by Severity</h2>
+    <table>
+        <thead><tr><th>Severity</th><th>Count</th></tr></thead>
+        <tbody>
+            {% for sev, count in stats.by_severity.items() %}
+            <tr>
+                <td><span class="badge badge-{{ sev }}">{{ sev }}</span></td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Recent Logs</h2>
+    <table>
+        <thead>
+            <tr><th>Time</th><th>Severity</th><th>Source IP</th><th>Event Type</th><th>Message</th></tr>
+        </thead>
+        <tbody>
+            {% for log in recent_logs %}
+            <tr>
+                <td>{{ log.timestamp[:19] if log.timestamp else '' }}</td>
+                <td><span class="badge badge-{{ log.severity }}">{{ log.severity }}</span></td>
+                <td>{{ log.source_ip or '-' }}</td>
+                <td>{{ log.event_type or '-' }}</td>
+                <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    {{ log.message[:80] if log.message else '' }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if not recent_logs %}<p>No logs ingested yet.</p>{% endif %}
+</div>
+
+<div class="card">
+    <h2>Recent Detections</h2>
+    <table>
+        <thead><tr><th>Time</th><th>Rule</th><th>Severity</th><th>Description</th></tr></thead>
+        <tbody>
+            {% for d in recent_detections %}
+            <tr>
+                <td>{{ d.created_at[:19] if d.created_at else '' }}</td>
+                <td>{{ d.rule_name }}</td>
+                <td><span class="badge badge-{{ d.severity }}">{{ d.severity }}</span></td>
+                <td>{{ d.description[:80] if d.description else '' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

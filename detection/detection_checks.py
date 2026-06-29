@@ -1,42 +1,9 @@
-#!/usr/bin/env python3
 """Detection-friendly checks for triage summary."""
 
 import re
 from collections import defaultdict
 
-
-MITRE_TACTICS = {
-    "T1078": "Valid Accounts",
-    "T1110": "Initial Access",
-    "T1190": "Exploitation for Privilege Escalation",
-    "T1068": "Privilege Escalation",
-    "T1083": "Discovery",
-    "T1046": "Service Discovery", 
-    "T1048": "Exfiltration",
-    "T1005": "Masquerading",
-    "T1082": "Lateral Movement",
-    "T1021": "Remote Services",
-    "T1072": "Execution",
-    "T1059": "Command and Scripting Interpreter",
-    "T1204": "User Execution",
-    "T1047": "Windows Management Instrumentation",
-    "T1027": "Obfuscated Files or Information",
-    "T1080": "Exfiltration Over Alternative Protocol",
-    "T1498": "Denial of Service",
-    "T1557": "Man-in-the-Middle",
-    "T1040": "Network Sniffing",
-    "T1496": "Resource Hijacking",
-    "T1071": "External Remote Services",
-    "T1055": "Process Injection",
-    "T1105": "Ingress Tool Transfer",
-    "T1547": "Boot or Logon Autostart Execution",
-    "T1004": "Execution Guardrails",
-    "T1098": "Account Manipulation",
-    "T1003": "OS Credential Dumping",
-    "T1001": "Exfiltration Over DNS",
-    "T1041": "Exfiltration Over C2 Channel",
-    "T1112": "Archive Data",
-}
+from _constants import MITRE_TACTICS
 
 
 def run_detection_checks(records: list[dict]) -> dict:
@@ -74,26 +41,33 @@ def run_detection_checks(records: list[dict]) -> dict:
 
 
 def find_failed_login_bursts(records: list[dict], threshold: int = 5, window_minutes: int = 10) -> list[str]:
-    """Find failed login bursts from same source."""
+    """Find failed login bursts from same source. O(n) using Counter."""
+    from collections import Counter
+
     failed = [r for r in records if "fail" in r.get("event_type", "").lower()]
+    if not failed:
+        return []
+
+    ip_counts: Counter = Counter()
+    user_counts: Counter = Counter()
+
+    for r in failed:
+        src_ip = r.get("source_ip", "")
+        user = r.get("user", "")
+        if src_ip:
+            ip_counts[src_ip] += 1
+        if user:
+            user_counts[user] += 1
+
     bursts = []
-
-    for i, record in enumerate(failed):
-        src = record.get("source_ip", "") or record.get("user", "")
-        if not src:
-            continue
-
-        count = 1
-
-        for other in failed[i+1:]:
-            if (other.get("source_ip", "") == record.get("source_ip", "") or
-                other.get("user", "") == record.get("user", "")):
-                count += 1
-
+    for src, count in ip_counts.most_common():
         if count >= threshold:
             bursts.append(f"{src}: {count} failed attempts")
+    for user, count in user_counts.most_common():
+        if count >= threshold:
+            bursts.append(f"{user}: {count} failed attempts")
 
-    return list(set(bursts))[:10]
+    return bursts[:10]
 
 
 def find_new_accounts(records: list[dict]) -> list[str]:

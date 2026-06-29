@@ -1,0 +1,38 @@
+# sentry-ingest: File Tailing, Log Parsing, and File Watching
+#
+# This crate handles the INGESTION side of the agent — reading log
+# files, parsing lines into LogEntry structs, and watching for new
+# content using inotify (via the notify crate).
+#
+# Architecture:
+#   1. FileTail — reads a file from a given byte offset,
+#      parses each line, and returns parsed LogEntry values.
+#      Designed to be called repeatedly as the file grows.
+#   2. detect_format — classifies a log line into "ssh", "auth",
+#      "firewall", "web", "auditd", or "syslog" based on keywords.
+#   3. detect_severity — assigns severity based on keywords.
+#   4. extract_fields — regex extraction of source IP and username.
+#   5. watch_files — async function that sets up inotify watchers
+#      and sends new log entries through a tokio channel.
+#
+# Key Rust concepts:
+#   - BufRead / BufReader — buffered I/O for efficient line reading
+#   - Seek / SeekFrom — jumping to a position in a file (resume)
+#   - glob::glob — shell-style file pattern expansion
+#   - #[cfg(unix)] — conditional compilation for OS-specific code
+
+[package]
+name = "sentry-ingest"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sentry-core = { path = "../sentry-core" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+regex = { workspace = true }
+notify = { workspace = true }
+notify-debouncer-full = { workspace = true }
+glob = { workspace = true }
+anyhow = { workspace = true }

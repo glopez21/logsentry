@@ -1,0 +1,32 @@
+# sentry-agent: Augur Hub REST Client
+#
+# This crate implements the communication protocol between the
+# agent and the Augur SOC hub. It mirrors the Python augur-client
+# protocol:
+#
+#   POST /api/v1/agents/register   — handshake with hub
+#   POST /api/v1/agents/heartbeat  — keepalive (every N seconds)
+#   POST /api/v1/events            — push a single event
+#   POST /api/v1/events/batch      — push multiple events
+#   GET  /api/v1/agents/:id/config — pull remote config overrides
+#   GET  /api/v1/agents/:id/tasks  — poll for remote tasks
+#   POST /api/v1/agents/:id/tasks/result — submit task output
+#
+# When the connection is up, events are pushed immediately. When
+# it's down, they queue in sentry-store and drain on reconnect.
+
+[package]
+name = "sentry-agent"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sentry-core = { path = "../sentry-core" }
+sentry-store = { path = "../sentry-store" }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+tokio = { workspace = true }
+uuid = { workspace = true }

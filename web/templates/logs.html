@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %} — Logs{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Log Browser</h2>
+    <form class="filters" method="get" action="/web/logs">
+        <input type="text" name="search" placeholder="Search messages..." value="{{ search or '' }}">
+        <select name="severity">
+            <option value="">All Severities</option>
+            {% for s in ['critical', 'high', 'medium', 'low', 'info'] %}
+            <option value="{{ s }}" {% if severity == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="source_ip" placeholder="Source IP" value="{{ source_ip or '' }}">
+        <button type="submit">Search</button>
+    </form>
+    <table>
+        <thead>
+            <tr><th>Time</th><th>Severity</th><th>Source IP</th><th>User</th><th>Event Type</th><th>Message</th></tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.timestamp[:19] if log.timestamp else '' }}</td>
+                <td><span class="badge badge-{{ log.severity }}">{{ log.severity }}</span></td>
+                <td>{{ log.source_ip or '-' }}</td>
+                <td>{{ log.user_name or '-' }}</td>
+                <td>{{ log.event_type or '-' }}</td>
+                <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    {{ log.message[:100] if log.message else '' }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if not logs %}<p>No logs found.</p>{% endif %}
+</div>
+{% endblock %}

@@ -1439,6 +1439,59 @@ def run_serve(args) -> None:
     async def tail_health() -> dict:
         return {"status": "ok", "clients": len(tail_clients)}
 
+    # ── Web UI ───────────────────────────────────────────────────
+    try:
+        from fastapi.responses import HTMLResponse
+        from fastapi.templating import Jinja2Templates
+        from fastapi import Request
+        from pathlib import Path
+
+        templates_dir = Path(__file__).resolve().parent / "web" / "templates"
+        if templates_dir.exists():
+            templates = Jinja2Templates(directory=str(templates_dir))
+
+            @app.get("/web/", response_class=HTMLResponse)
+            async def web_dashboard(request: Request):
+                stats = store.get_stats() if store else {"total_logs": 0, "total_detections": 0, "detections_24h": 0, "by_severity": {}}
+                recent_logs = store.query(limit=20) if store else []
+                recent_dets = []
+                if store:
+                    try:
+                        conn = store.get_conn()
+                        with conn.cursor() as cur:
+                            cur.execute("SELECT * FROM logsentry.detections ORDER BY created_at DESC LIMIT 10")
+                            cols = [desc[0] for desc in cur.description]
+                            recent_dets = [dict(zip(cols, row)) for row in cur.fetchall()]
+                        store.put_conn(conn)
+                    except Exception:
+                        pass
+                return templates.TemplateResponse("dashboard.html", {
+                    "request": request, "stats": stats,
+                    "recent_logs": recent_logs, "recent_detections": recent_dets,
+                })
+
+            @app.get("/web/logs", response_class=HTMLResponse)
+            async def web_logs(
+                request: Request,
+                search: str = "",
+                severity: str = "",
+                source_ip: str = "",
+            ):
+                kwargs: dict[str, Any] = {"limit": 100}
+                if search:
+                    kwargs["search"] = search
+                if severity:
+                    kwargs["severity"] = severity
+                if source_ip:
+                    kwargs["source_ip"] = source_ip
+                logs = store.query(**kwargs) if store else []
+                return templates.TemplateResponse("logs.html", {
+                    "request": request, "logs": logs,
+                    "search": search, "severity": severity, "source_ip": source_ip,
+                })
+    except ImportError:
+        pass
+
     print(f"[*] Starting LogSentry API server on {args.host}:{args.port}")
     uvicorn.run(app, host=args.host, port=args.port)
 

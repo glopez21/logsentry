@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import os
 from pathlib import Path
 from typing import Any
@@ -80,7 +81,7 @@ def load_config(path: str | None = None) -> dict[str, Any]:
       - LOGSENTRY_DSN overrides storage.dsn
       - LOGSENTRY_MODE overrides engine.mode
     """
-    config: dict[str, Any] = DEFAULT_CONFIG.copy()
+    config: dict[str, Any] = copy.deepcopy(DEFAULT_CONFIG)
 
     config_path = path or find_config()
     if config_path:

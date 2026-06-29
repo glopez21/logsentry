@@ -1,0 +1,82 @@
+# ─────────────────────────────────────────────────────────────────
+# sentryd — Rust SOC Agent Workspace Root
+#
+# This file defines a Cargo workspace containing 7 crates.
+# A workspace shares a single Cargo.lock and target/ directory
+# across all member crates, so you only run `cargo build` once
+# from the root.
+#
+# resolver = "3" uses the 2021 edition resolver which handles
+#   dependency unification better when crates depend on different
+#   versions of the same upstream crate.
+#
+# members = [...] lists every crate. Cargo will discover and build
+#   all of them automatically.
+# ─────────────────────────────────────────────────────────────────
+
+[workspace]
+resolver = "3"
+members = [
+    "crates/sentry-core",
+    "crates/sentry-store",
+    "crates/sentry-agent",
+    "crates/sentry-ingest",
+    "crates/sentry-detect",
+    "crates/sentry-exec",
+    "crates/sentryd",
+]
+
+# ─── Workspace-shared Dependencies ───────────────────────────────
+#
+# Dependencies declared here with [workspace.dependencies] can be
+# referenced from any member crate's Cargo.toml as
+# `dep_name = { workspace = true }`. This ensures all crates use
+# the exact same version.
+#
+# Key choices:
+#   - serde + serde_json: standard Rust serialization. The "derive"
+#     feature enables #[derive(Serialize, Deserialize)].
+#   - serde_yaml: deserialize the agent's YAML config file.
+#   - tokio (features = ["full"]): async runtime for networking,
+#     file I/O, timers, and signal handling.
+#   - tracing: structured, leveled logging (more powerful than
+#     log + env_logger). tracing-subscriber routes log output.
+#   - clap (features = ["derive"]): CLI argument parsing using
+#     derive macros (#[derive(Parser)]).
+#   - anyhow + thiserror: the standard Rust error-handling duo.
+#     thiserror for library crates (define typed error enums),
+#     anyhow for the binary crate (dynamic error wrapping).
+#   - chrono (features = ["serde"]): datetime handling with
+#     serde serialization support for JSON timestamps.
+#   - reqwest (features = ["json", "rustls-tls"]): HTTP client
+#     with JSON body support and pure-Rust TLS (no OpenSSL dep).
+#   - rusqlite (features = ["bundled"]): SQLite bindings that
+#     compile libsqlite3 from source — no system library needed.
+#   - notify + notify-debouncer-full: cross-platform filesystem
+#     watching (inotify on Linux). The debouncer coalesces rapid
+#     change events into a single notification.
+#   - regex: regular expression engine for log pattern matching.
+#   - uuid (features = ["v4", "serde"]): universally unique
+#     identifiers, generated randomly (v4).
+#   - glob: expand shell-style patterns like /var/log/*.log.
+# ─────────────────────────────────────────────────────────────────
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+thiserror = "2"
+chrono = { version = "0.4", features = ["serde"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+rusqlite = { version = "0.31", features = ["bundled"] }
+notify = "6"
+notify-debouncer-full = "0.3"
+regex = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+glob = "0.3"
+url = "2"

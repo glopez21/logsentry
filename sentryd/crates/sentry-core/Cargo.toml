@@ -1,0 +1,22 @@
+# sentry-core: shared types, config, error types
+#
+# This is the LEAF crate — it depends on nothing else in the
+# workspace. Every other crate depends on sentry-core. It defines
+# the common data structures that flow through the entire agent.
+#
+# thiserror is used here (not anyhow) because this is a library
+# crate: we want a clean, typed error enum that callers can match
+# on. anyhow is reserved for the binary crate (sentryd) where we
+# just want ? to "just work" with any error type.
+
+[package]
+name = "sentry-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+thiserror = "2"
+anyhow = { workspace = true }

@@ -1,0 +1,28 @@
+# sentry-exec: Remote Task Executor
+#
+# Executes RemoteTask values received from the Augur hub. The hub
+# can instruct the agent to:
+#   - Run a script (write to temp file, execute, clean up)
+#   - Run a command with arguments
+#   - Collect a file and return its contents
+#   - Acquire a memory dump using AVML/Lime/dumpmem
+#
+# All execution is sandboxed by:
+#   1. Timeout — any task that exceeds its timeout is killed
+#   2. Resource limits — not yet implemented (would use setrlimit)
+#   3. Temp file cleanup — scripts are written to /tmp and deleted
+#
+# Security note: the agent runs as root on the target. Remote
+# task execution is a powerful capability — the hub should
+# authenticate and authorize all task requests.
+
+[package]
+name = "sentry-exec"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sentry-core = { path = "../sentry-core" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }

@@ -1,7 +1,8 @@
-#!/usr/bin/env python3
 """Severity scoring, timeline generation, and report generation."""
 
 from datetime import datetime
+
+from _constants import SEVERITY_THRESHOLDS, THREAT_INTEL_LOCAL
 
 
 def enrich_ip(ip: str) -> dict:
@@ -12,56 +13,23 @@ def enrich_ip(ip: str) -> dict:
         return result
     except ImportError:
         pass
-    
+
     result = {
         "ip": ip,
         "type": "unknown",
         "severity": "info",
         "reputation": "unknown"
     }
-    
+
     if not ip:
         return result
-    
-    for prefix, data in THREAT_INTEL.items():
+
+    for prefix, data in THREAT_INTEL_LOCAL.items():
         if ip.startswith(prefix):
             result.update(data)
             break
-    
+
     return result
-
-
-SEVERITY_MAP = {
-    "critical": [
-        "priv_esc", "Privilege escalation", "lateral_movement detected", "data_exfiltration",
-        "dcsync", "pass the hash", "golden ticket", "root account", "etc/shadow"
-    ],
-    "high": [
-        "brute force", "max authentication attempts", "exceed", "credential_stuffing",
-        "mitm", "man-in-the-middle", "arp spoofing", "ssl strip", "data exfiltration",
-        "root password", "password reset for root", "sudoers"
-    ],
-    "medium": [
-        "failed password", "failed login", "invalid user", "authentication failure",
-        "port scan", "suspicious process", "process injection", "registry",
-        "high cpu", "outbound connection", "unexpected"
-    ],
-    "low": [
-        "session open", "session_open", "session close", "session_close",
-        "disconnect", "new session",
-        "password changed", "cron job", "accepted password"
-    ],
-    "info": [
-        "normal", "heartbeat", "keepalive", "connection", "timeout"
-    ]
-}
-
-THREAT_INTEL = {
-    "185.220.101.": {"type": "Tor Exit Node", "severity": "high", "reputation": "malicious"},
-    "91.121.": {"type": "Known Scanner", "severity": "high", "reputation": "suspicious"},
-    "45.33.32.": {"type": "Proxy/ VPN", "severity": "medium", "reputation": "suspicious"},
-    "103.45.67.": {"type": "Dynamic IP", "severity": "low", "reputation": "neutral"},
-}
 
 
 def get_severity(event_type: str = "", message: str = "") -> str:
@@ -70,7 +38,7 @@ def get_severity(event_type: str = "", message: str = "") -> str:
     message = message.lower()
     combined = f"{event_type} {message}"
     
-    for severity, patterns in SEVERITY_MAP.items():
+    for severity, patterns in SEVERITY_THRESHOLDS.items():
         for pattern in patterns:
             if pattern.lower() in combined:
                 return severity

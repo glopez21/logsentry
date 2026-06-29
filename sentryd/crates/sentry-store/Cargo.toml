@@ -1,0 +1,35 @@
+# sentry-store: SQLite-backed Local Event Queue
+#
+# This crate provides LocalStore, a persistent buffer for events
+# that haven't been sent to the hub yet (yet). It uses SQLite via
+# rusqlite, which is embedded directly into the binary (no system
+# SQLite needed).
+#
+# Key design:
+#   - event_queue table: FIFO buffer of serialized LogEntry JSON.
+#     Events are inserted with sent=0, then marked sent=1 after
+#     successful transmission. This is the "at-least-once" delivery
+#     model — we might send duplicates but never lose events.
+#   - checkpoint table: stores file positions for sentry-ingest so
+#     it can resume tailing log files across restarts.
+#   - Mutex<Connection>: rusqlite's Connection uses internal
+#     RefCell and is not Sync (can't share &Connection across
+#     threads). Wrapping it in std::sync::Mutex makes the whole
+#     LocalStore Sync so Arc<LocalStore> can be shared across
+#     tokio tasks.
+#
+# SQLite is chosen over a flat file because:
+#   1. Atomic writes and crash safety
+#   2. Efficient FIFO queries with ORDER BY ... LIMIT
+#   3. Built-in indexing
+
+[package]
+name = "sentry-store"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sentry-core = { path = "../sentry-core" }
+rusqlite = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }

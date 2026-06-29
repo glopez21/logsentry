@@ -1,0 +1,49 @@
+# sentryd: Main Binary and CLI
+#
+# This crate produces the final sentryd binary. It ties together
+# all other crates into a runnable agent with a CLI interface.
+#
+# The CLI has 6 subcommands:
+#   daemon       — Run as a background service (default mode)
+#   parse        — Parse a log line/file and print structured JSON
+#   send         — Send a raw log line directly to the hub
+#   exec         — Execute a remote task locally (debug/testing)
+#   status       — Show agent status (pending count, hub URL, etc.)
+#   check-config — Validate the YAML config file
+#
+# Architecture (daemon mode):
+#
+#   main()
+#     ├── load config
+#     ├── register with hub
+#     ├── spawn heartbeat loop task
+#     ├── spawn file watcher task
+#     └── main event loop (ingest → detect → store)
+#
+#   Shutdown: ctrl-c → watch channel → all tasks stop gracefully
+
+[package]
+name = "sentryd"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "sentryd"
+path = "src/main.rs"
+
+[dependencies]
+sentry-core = { path = "../sentry-core" }
+sentry-store = { path = "../sentry-store" }
+sentry-agent = { path = "../sentry-agent" }
+sentry-ingest = { path = "../sentry-ingest" }
+sentry-detect = { path = "../sentry-detect" }
+sentry-exec = { path = "../sentry-exec" }
+clap = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }

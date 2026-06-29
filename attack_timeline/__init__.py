@@ -7,22 +7,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 from collections import defaultdict
 
-
-MITRE_KILL_CHAIN: list[dict] = [
-    {"phase": "reconnaissance", "tactics": ["T1595", "T1590", "T1589", "T1598"], "description": "Gathering info on target"},
-    {"phase": "resource_development", "tactics": ["T1583", "T1586", "T1587"], "description": "Acquiring infrastructure"},
-    {"phase": "initial_access", "tactics": ["T1189", "T1190", "T1133", "T1569", "T1078", "T0852", "T0860"], "description": "Gaining foothold"},
-    {"phase": "execution", "tactics": ["T1059", "T1053", "T1609", "T1204"], "description": "Running malicious code"},
-    {"phase": "persistence", "tactics": ["T1098", "T1543", "T1547", "T1505"], "description": "Maintaining access"},
-    {"phase": "privilege_escalation", "tactics": ["T1068", "T1055"], "description": "Gaining higher privileges"},
-    {"phase": "defense_evasion", "tactics": ["T1562", "T1070", "T1027"], "description": "Avoiding detection"},
-    {"phase": "credential_access", "tactics": ["T1110", "T1552", "T1003"], "description": "Stealing credentials"},
-    {"phase": "discovery", "tactics": ["T1046", "T1082", "T1083"], "description": "Exploring environment"},
-    {"phase": "lateral_movement", "tactics": ["T1021", "T1210"], "description": "Moving through systems"},
-    {"phase": "collection", "tactics": ["T1005", "T1560"], "description": "Gathering data"},
-    {"phase": "exfiltration", "tactics": ["T1041", "T1048", "T1567"], "description": "Stealing data"},
-    {"phase": "impact", "tactics": ["T1486", "T1484", "T1490"], "description": "Causing damage"},
-]
+from _constants import MITRE_KILL_CHAIN
 
 
 @dataclass
