@@ -37,6 +37,11 @@ DEFAULT_CONFIG = {
         "syslog": {"enabled": False, "bind": "0.0.0.0", "port": 514, "protocol": "udp"},
         "http": {"enabled": True},
         "file_watchers": {"enabled": False, "paths": ["/var/log"]},
+        # Parser overrides to pin formats for specific sources.
+        # Examples:
+        #   - {source_ip: "10.0.0.5", parser: "web_access"}
+        #   - {contains: "nginx:", parser: "web_error"}
+        "overrides": [],
     },
     "detection": {
         "enabled": True,
@@ -52,6 +57,8 @@ DEFAULT_CONFIG = {
     "server": {
         "host": "0.0.0.0",
         "port": 8080,
+        # Optional API key to protect /ingest and /api endpoints. If empty, auth is disabled.
+        "api_key": os.environ.get("LOGSENTRY_API_KEY", ""),
     },
     "schemas": ["logsentry", "alertflow", "threatpulse", "shared"],
     "augur": {
@@ -61,6 +68,13 @@ DEFAULT_CONFIG = {
         "agent_type": os.environ.get("AUGUR_AGENT_TYPE", "logsentry"),
         "api_key": os.environ.get("AUGUR_API_KEY", ""),
         "heartbeat_interval": int(os.environ.get("AUGUR_HEARTBEAT_INTERVAL", "30")),
+    },
+    "threatpulse": {
+        # Auto-enable if THREATPULSE_URL is present in the environment
+        "enabled": bool(os.environ.get("THREATPULSE_URL")),
+        "api_url": os.environ.get("THREATPULSE_URL", ""),
+        "api_key": os.environ.get("THREATPULSE_API_KEY", ""),
+        "timeout": float(os.environ.get("THREATPULSE_TIMEOUT", "5.0")),
     },
 }
 
@@ -94,6 +108,14 @@ def load_config(path: str | None = None) -> dict[str, Any]:
         config["storage"]["dsn"] = os.environ["LOGSENTRY_DSN"]
     if os.environ.get("LOGSENTRY_MODE"):
         config["engine"]["mode"] = os.environ["LOGSENTRY_MODE"]
+    # Env presence means explicit operator intent: enable + point the
+    # integration, even if the YAML shipped with `enabled: false`.
+    if os.environ.get("AUGUR_URL"):
+        config["augur"]["enabled"] = True
+        config["augur"]["hub_url"] = os.environ["AUGUR_URL"]
+    if os.environ.get("THREATPULSE_URL"):
+        config["threatpulse"]["enabled"] = True
+        config["threatpulse"]["api_url"] = os.environ["THREATPULSE_URL"]
 
     return config
 

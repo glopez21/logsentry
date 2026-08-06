@@ -1,0 +1,26 @@
+image:
+  repository: ghcr.io/glopez21/logsentry
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  ports:
+    syslogUdp: 514
+    syslogTcp: 514
+    api: 8080
+
+resources: {}
+
+apiKey: ""
+dsn: "postgresql://logsentry:logsentry@postgres:5432/logsentry"
+
+augur:
+  enabled: false
+  url: ""
+  apiKey: ""
+
+threatpulse:
+  enabled: false
+  url: ""
+  apiKey: ""

@@ -37,6 +37,10 @@ MITRE_TACTICS = {
 RFC3164_RE = re.compile(
     r"^(\w{3}\s+\d+\s+\d+:\d+:\d+)\s+(\S+)\s+(\S+?)(?:\[(\d+)\])?:\s*(.*)$"
 )
+BARE_RFC5424_RE = re.compile(
+    r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))"
+    r"\s+(\S+)\s+(\S+?)(?:\[(\d+)\])?:\s*(.*)$"
+)
 RFC5424_RE = re.compile(
     r"^<\d{1,3}>\d+\s+"
     r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))"
@@ -55,6 +59,24 @@ def parse_syslog(line: str) -> dict | None:
 
     clean_line = re.sub(r'\[TACTIC:[A-Z0-9]+\]', '', line)
     m = RFC3164_RE.match(clean_line)
+    if m:
+        timestamp, host, process, pid, message = m.groups()
+        return {
+            "timestamp": timestamp,
+            "host": host,
+            "user": _extract_user(message),
+            "source_ip": _extract_ip(message, "src"),
+            "destination_ip": _extract_ip(message, "dst"),
+            "event_type": "syslog",
+            "process": process,
+            "pid": pid or "",
+            "raw_message": message.strip(),
+            "mitre_tactic": mitre_tactic,
+            "mitre_technique": MITRE_TACTICS.get(mitre_tactic, ""),
+            "format": "syslog",
+        }
+
+    m = BARE_RFC5424_RE.match(clean_line)
     if m:
         timestamp, host, process, pid, message = m.groups()
         return {

@@ -1,6 +1,6 @@
 [Unit]
 Description=LogSentry — Security Log Engine
-Documentation=https://github.com/w01f/logsentry
+Documentation=https://github.com/glopez21/logsentry
 After=network-online.target postgresql.service
 Wants=network-online.target
 
@@ -9,6 +9,9 @@ Type=simple
 User=logsentry
 Group=logsentry
 WorkingDirectory=/opt/logsentry
+
+# Host-specific endpoints (edit /etc/logsentry/endpoints.env per host)
+EnvironmentFile=-/etc/logsentry/endpoints.env
 
 # Path to virtualenv
 ExecStart=/opt/logsentry/.venv/bin/python /opt/logsentry/main.py daemon

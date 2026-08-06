@@ -8,12 +8,38 @@ from __future__ import annotations
 import socket
 import threading
 import signal
+import time
+from collections import defaultdict
 from typing import Callable, Optional, Tuple
 
 
+class TokenBucket:
+    """Token bucket rate limiter — per-source-IP rate control."""
+
+    def __init__(self, rate: float = 100.0, burst: int = 200):
+        self.rate = rate
+        self.burst = burst
+        self._tokens: dict[str, float] = defaultdict(float)
+        self._last: dict[str, float] = defaultdict(float)
+
+    def allow(self, key: str) -> bool:
+        now = time.monotonic()
+        elapsed = now - self._last[key]
+        self._last[key] = now
+        self._tokens[key] = min(self.burst, self._tokens[key] + elapsed * self.rate)
+        if self._tokens[key] >= 1.0:
+            self._tokens[key] -= 1.0
+            return True
+        return False
+
+    def reset(self, key: str) -> None:
+        self._tokens.pop(key, None)
+        self._last.pop(key, None)
+
+
 class SyslogListener:
-    """Listens for syslog messages on UDP or TCP."""
-    
+    """Listens for syslog messages on UDP or TCP with per-source rate limiting."""
+
     def __init__(
         self,
         port: int = 514,
@@ -21,7 +47,10 @@ class SyslogListener:
         parser: Optional[Callable] = None,
         callback: Optional[Callable] = None,
         bind_address: str = "0.0.0.0",
-        buffer_size: int = 4096
+        buffer_size: int = 4096,
+        rate_limit: float = 100.0,
+        rate_burst: int = 200,
+        register_signals: bool = True,
     ):
         self.port = port
         self.protocol = protocol.lower()
@@ -29,13 +58,19 @@ class SyslogListener:
         self.callback = callback
         self.bind_address = bind_address
         self.buffer_size = buffer_size
-        
+        self.rate_limit = rate_limit
+        self.rate_burst = rate_burst
+
         self._running = False
         self._socket: socket.socket | None = None
         self._thread: threading.Thread | None = None
-        
-        signal.signal(signal.SIGINT, self._signal_handler)
-        signal.signal(signal.SIGTERM, self._signal_handler)
+        self._limiter = TokenBucket(rate=rate_limit, burst=rate_burst)
+
+        # Only register signal handlers when running standalone (CLI mode).
+        # In daemon mode the parent process owns the signal handlers.
+        if register_signals:
+            signal.signal(signal.SIGINT, self._signal_handler)
+            signal.signal(signal.SIGTERM, self._signal_handler)
     
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals."""
@@ -108,15 +143,24 @@ class SyslogListener:
         try:
             client, addr = sock.accept()
             client.settimeout(5.0)
-            
+
             try:
+                buffer = ""
                 while True:
                     data = client.recv(self.buffer_size)
                     if not data:
                         break
-                    message = data.decode('utf-8', errors='ignore').strip()
-                    if message:
-                        self._process_message(message, addr)
+                    buffer += data.decode('utf-8', errors='ignore')
+                    # Process complete newline-delimited messages so a sender
+                    # that batches multiple syslog lines in one send is handled.
+                    lines = buffer.split('\n')
+                    buffer = lines.pop()
+                    for raw in lines:
+                        message = raw.strip()
+                        if message:
+                            self._process_message(message, addr)
+                    if len(buffer) > self.buffer_size * 8:
+                        buffer = ""
             finally:
                 client.close()
         except socket.timeout:
@@ -125,18 +169,23 @@ class SyslogListener:
             pass
     
     def _process_message(self, message: str, source: Tuple) -> None:
-        """Process a syslog message."""
+        """Process a syslog message with rate limiting."""
         if not message:
             return
-        
+
+        source_ip = source[0] if source else "unknown"
+
+        if not self._limiter.allow(source_ip):
+            return
+
         record = None
-        
+
         if self.parser:
             try:
                 record = self.parser(message)
             except Exception:
                 pass
-        
+
         if self.callback:
             try:
                 self.callback(message, record, source)

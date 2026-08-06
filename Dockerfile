@@ -8,15 +8,19 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    git \
     rsyslog \
     && rm -rf /var/lib/apt/lists/*
 
-COPY uv.lock pyproject.toml ./
+COPY . .
 
 RUN pip install uv --quiet && \
-    uv sync --frozen --no-dev --extra server 2>&1 | tail -1
+    rm -rf /app/.venv && \
+    uv sync --frozen --no-dev --python /usr/local/bin/python --extra server --extra augur
 
-COPY . .
+# Overlay vendored augur-client fix (auth_token handling on register/heartbeat).
+# Upstream 99676bd is missing this; the pin is not updated in uv.lock.
+COPY deploy/vendor/augur_client/client.py /app/.venv/lib/python3.12/site-packages/augur_client/client.py
 
 # Entrypoint handles config generation at runtime
 COPY deploy/docker-entrypoint.sh /entrypoint.sh

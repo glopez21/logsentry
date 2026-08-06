@@ -27,6 +27,12 @@ from parsers.web_error_parser import parse_web_error
 from parsers.auditd_parser import parse_auditd
 from parsers.firewall_parser import parse_firewall
 from parsers.json_log_parser import parse_json_log
+from parsers.webtraffic_parser import parse_webtraffic
+from parsers.prober_parser import parse_prober
+from parsers.dnsgen_parser import parse_dnsgen
+from parsers.opslog_parser import parse_opslog
+from parsers.weathergen_parser import parse_weathergen
+from parsers.sysmetgen_parser import parse_sysmetgen
 from detection.detection_checks import run_detection_checks
 from output.formatter import format_output
 from output.advanced import (
@@ -48,13 +54,22 @@ LOG_PARSERS = {
     "auditd": parse_auditd,
     "firewall": parse_firewall,
     "json": parse_json_log,
+    "webtraffic": parse_webtraffic,
+    "prober": parse_prober,
+    "dnsgen": parse_dnsgen,
+    "opslog": parse_opslog,
+    "weathergen": parse_weathergen,
+    "sysmetgen": parse_sysmetgen,
 }
 
 
 def detect_format(log_line: str) -> Optional[str]:
     """Auto-detect log format from line content."""
+    from parsers._common import split_syslog
+    body, _hts, _host = split_syslog(log_line)
+
     # CloudTrail JSON (specific schema)
-    if detect_cloudtrail(log_line):
+    if detect_cloudtrail(log_line) or detect_cloudtrail(body):
         return "cloudtrail"
 
     # Generic JSON (non-CloudTrail)
@@ -65,7 +80,7 @@ def detect_format(log_line: str) -> Optional[str]:
     if re.match(r"^<\d{1,3}>\d+\s+\d{4}-\d{2}-\d{2}T", log_line):
         return "rfc5424"
 
-    # SSH auth
+    # SSH auth (checked on the raw line so the 'sshd' tag is visible)
     if "sshd" in log_line and ("Accepted" in log_line or "Failed" in log_line or "Invalid" in log_line):
         return "ssh"
     if "ssh" in log_line.lower() and ("session" in log_line.lower() or "login" in log_line.lower()):
@@ -76,13 +91,14 @@ def detect_format(log_line: str) -> Optional[str]:
         return "auditd"
 
     # iptables kernel log (contains IN= OUT= SRC= etc.)
-    if " IN=" in log_line or "kernel:" in log_line and ("SRC=" in log_line or "DST=" in log_line):
+    if (" IN=" in log_line or "kernel:" in log_line) and ("SRC=" in log_line or "DST=" in log_line):
         return "firewall"
     if "firewalld[" in log_line:
         return "firewall"
 
-    # Web access log (Apache/Nginx combined/common format)
-    if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+\S+\s+\S+\s+\[', log_line):
+    # Web access log (Apache/Nginx combined/common format) - tolerate syslog header
+    web_access_re = r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+\S+\s+\S+\s+\['
+    if re.match(web_access_re, log_line) or re.match(web_access_re, body):
         return "web_access"
 
     # Web error log (Apache: [Day Mon DD HH:MM:SS.mmmmmm YYYY] [module:severity] ...)
@@ -90,11 +106,32 @@ def detect_format(log_line: str) -> Optional[str]:
         return "web_error"
     if re.match(r"\d{4}/\d{2}/\d{2}\s+\d{2}:\d{2}:\d{2}\s+\[\w+\]\s+\d+#\d+:", log_line):
         return "web_error"
-    if re.match(r"\d{4}/\d{2}/\d{2}\s+\d{2}:\d{2}:\d{2}\s+\[\w+\]\s+\d+#\d+:", log_line):
-        return "web_error"
 
-    # RFC 3164 syslog
+    # RFC 3164 syslog (raw line includes the header)
     if re.match(r"^\w{3}\s+\d+\s+\d+:\d+:\d+", log_line):
+        if "session" in log_line.lower() or "password" in log_line.lower():
+            return "auth"
+        return "syslog"
+
+    # LogSentry loggen apps (custom formats)
+    if re.search(r'"http://\S+".*\d+ms\s+ua=\S+', body):
+        return "webtraffic"
+    if re.search(r"probe \d+\.\d+\.\d+\.\d+: (up|open|no open)", body):
+        return "prober"
+    if re.search(r"\bquery \S+ -> \S+", body):
+        return "dnsgen"
+    if re.search(r"\bops: .+ \[rc=\d+\]", body):
+        return "opslog"
+    if re.search(r"\bweather\s+\S+\s+[-.\d]+,[-.\d]+\s+temp_c=", body):
+        return "weathergen"
+    if re.search(r"\bsysmet\s+\S+\s+cpu=", body):
+        return "sysmetgen"
+
+    # Bare RFC5424/ISO-timestamp syslog (Ubuntu /var/log/syslog style:
+    # "2026-08-05T12:21:44.160239+00:00 client2 systemd[1]: msg").
+    # Must stay after the loggen app rules since dnsgen/prober/opslog
+    # also begin with ISO timestamps.
+    if re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", log_line):
         if "session" in log_line.lower() or "password" in log_line.lower():
             return "auth"
         return "syslog"
@@ -281,6 +318,20 @@ Examples:
     tail_parser.add_argument("--search", help="Filter by search term")
     tail_parser.add_argument("--api-key", help="API key for authenticated endpoints")
 
+    # Bootstrap command
+    bootstrap_parser = subparsers.add_parser("bootstrap", help="Generate a self-contained installer script")
+    bootstrap_parser.add_argument("--mode", choices=["systemd", "docker"], default="systemd", help="Installer mode")
+    bootstrap_parser.add_argument("-o", "--output", help="Output script file (default: stdout)")
+    bootstrap_parser.add_argument("--repo", default="https://github.com/glopez21/logsentry", help="Logsentry repo URL for systemd install")
+    bootstrap_parser.add_argument("--branch", default="", help="Branch to checkout for systemd install")
+    bootstrap_parser.add_argument("--db-dsn", default="postgresql://logsentry:logsentry@localhost:5432/logsentry", help="Postgres DSN")
+    bootstrap_parser.add_argument("--api-key", default="", help="Server API key")
+    bootstrap_parser.add_argument("--augur-url", default="", help="Augur hub URL")
+    bootstrap_parser.add_argument("--augur-api-key", default="", help="Augur API key")
+    bootstrap_parser.add_argument("--threatpulse-url", default="", help="ThreatPulse URL")
+    bootstrap_parser.add_argument("--threatpulse-api-key", default="", help="ThreatPulse API key")
+    bootstrap_parser.add_argument("--docker-image", default="ghcr.io/glopez21/logsentry:latest", help="Docker image for docker mode")
+
     # Ingest command
     ingest_parser = subparsers.add_parser("ingest", help="Bulk-ingest log files into the database")
     ingest_parser.add_argument("path", help="Log file or directory to ingest")
@@ -292,7 +343,7 @@ Examples:
     ingest_parser.add_argument("-c", "--config", help="Path to config file")
 
     # Parse arguments
-    if len(sys.argv) > 1 and sys.argv[1] not in ["parse", "watch", "listen", "ticket", "lookup", "daemon", "gen-rsyslog", "query", "ingest"]:
+    if len(sys.argv) > 1 and sys.argv[1] not in ["parse", "watch", "listen", "ticket", "lookup", "daemon", "gen-rsyslog", "query", "ingest", "serve", "diff", "replay", "schedule", "tail", "bootstrap"]:
         # Default to parse command
         sys.argv.insert(1, "parse")
     
@@ -326,6 +377,8 @@ Examples:
         run_schedule(args)
     elif args.command == "serve":
         run_serve(args)
+    elif args.command == "bootstrap":
+        run_bootstrap(args)
     else:
         run_parse(args)
 
@@ -1037,6 +1090,81 @@ def run_ingest(args) -> None:
     print(f"\nDone: {total_parsed} parsed, {total_inserted} stored across {len(files)} files")
 
 
+def run_bootstrap(args) -> None:
+    """Generate a self-contained installer script for systemd or docker.
+
+    Embeds the corresponding installer from deploy/ and passes through parameters.
+    """
+    import os
+    script: str
+    if args.mode == "systemd":
+        installer_path = os.path.join(os.path.dirname(__file__), "deploy", "install.sh")
+        with open(installer_path, "r") as f:
+            install_content = f.read()
+        flags = []
+        if args.repo:
+            flags += ["--repo", args.repo]
+        if args.branch:
+            flags += ["--branch", args.branch]
+        if args.augur_url:
+            flags += ["--augur-url", args.augur_url]
+        if args.augur_api_key:
+            flags += ["--augur-api-key", args.augur_api_key]
+        if args.threatpulse_url:
+            flags += ["--threatpulse-url", args.threatpulse_url]
+        if args.threatpulse_api_key:
+            flags += ["--threatpulse-api-key", args.threatpulse_api_key]
+        if args.db_dsn:
+            flags += ["--db-dsn", args.db_dsn]
+        flags_str = " ".join([f'"{v}"' if " " in v else v for v in flags])
+        script = f"""#!/usr/bin/env bash
+set -euo pipefail
+# Self-contained LogSentry systemd installer (generated by logsentry bootstrap)
+cat > /tmp/logsentry-install.sh <<'INSTALLER'
+{install_content}
+INSTALLER
+chmod +x /tmp/logsentry-install.sh
+sudo /tmp/logsentry-install.sh {flags_str}
+"""
+    else:
+        # docker mode
+        installer_path = os.path.join(os.path.dirname(__file__), "deploy", "install-docker.sh")
+        with open(installer_path, "r") as f:
+            install_content = f.read()
+        flags = []
+        if args.docker_image:
+            flags += ["--image", args.docker_image]
+        if args.api_key:
+            flags += ["--api-key", args.api_key]
+        if args.db_dsn:
+            flags += ["--db-dsn", args.db_dsn]
+        if args.augur_url:
+            flags += ["--augur-url", args.augur_url]
+        if args.augur_api_key:
+            flags += ["--augur-api-key", args.augur_api_key]
+        if args.threatpulse_url:
+            flags += ["--threatpulse-url", args.threatpulse_url]
+        if args.threatpulse_api_key:
+            flags += ["--threatpulse-api-key", args.threatpulse_api_key]
+        flags_str = " ".join([f'"{v}"' if " " in v else v for v in flags])
+        script = f"""#!/usr/bin/env bash
+set -euo pipefail
+# Self-contained LogSentry docker installer (generated by logsentry bootstrap)
+cat > /tmp/logsentry-install-docker.sh <<'INSTALLER'
+{install_content}
+INSTALLER
+chmod +x /tmp/logsentry-install-docker.sh
+sudo /tmp/logsentry-install-docker.sh {flags_str}
+"""
+
+    if args.output:
+        with open(args.output, "w") as f:
+            f.write(script)
+        print(f"Installer written to: {args.output}")
+    else:
+        print(script)
+
+
 def run_tail(args) -> None:
     """Live-tail logs from the engine via WebSocket."""
     import asyncio
@@ -1094,6 +1222,7 @@ def run_serve(args) -> None:
 
     try:
         from fastapi import FastAPI, Request, UploadFile, File
+        from fastapi.encoders import jsonable_encoder
         from fastapi.responses import JSONResponse
         import uvicorn
     except ImportError:
@@ -1113,9 +1242,9 @@ def run_serve(args) -> None:
             line = line.strip()
             if not line:
                 continue
-            record = parse_log_line(line)
-            if record:
-                records.append(record)
+            parsed = parse_log_line(line)
+            if parsed:
+                records.append(_record_to_insert(parsed, line))
 
         # Store in Postgres
         inserted = 0
@@ -1132,6 +1261,90 @@ def run_serve(args) -> None:
             "status": "success",
             "parsed": len(records),
             "stored": inserted,
+        })
+
+    @app.post("/metrics")
+    async def ingest_metrics(payload: Request) -> JSONResponse:
+        """Ingest metric measurements posted by collector agents.
+
+        Accepts either a bare list of metric dicts:
+            [{"app": "weathergen", "host": "client1", "name": "temp_c",
+              "value": 22.4, "unit": "°C", "timestamp": "..."}, ...]
+        or an envelope:
+            {"app": "weathergen", "host": "client1",
+             "metrics": [{"name": "temp_c", "value": 22.4, "unit": "°C"}, ...]}
+        In the envelope form, app/host are applied to each metric.
+        """
+        if not store:
+            return JSONResponse(content={"error": "Storage not available"}, status_code=503)
+
+        try:
+            body = await payload.json()
+        except Exception as e:
+            return JSONResponse(content={"status": "error", "message": f"bad json: {e}"}, status_code=400)
+
+        metrics: list[dict] = []
+        if isinstance(body, dict):
+            env_app = body.get("app", "")
+            env_host = body.get("host", "")
+            items = body.get("metrics") or []
+            for m in items:
+                if not isinstance(m, dict):
+                    continue
+                metric = dict(m)
+                metric.setdefault("app", env_app)
+                metric.setdefault("host", env_host)
+                metrics.append(metric)
+        elif isinstance(body, list):
+            metrics = [m for m in body if isinstance(m, dict)]
+
+        valid = [m for m in metrics if "name" in m and "value" in m]
+        try:
+            inserted = store.insert_metrics_batch(valid)
+        except Exception as e:
+            return JSONResponse(content={"status": "error", "message": str(e), "parsed": len(valid)}, status_code=500)
+
+        return JSONResponse(content={"status": "success", "received": len(metrics), "stored": inserted})
+
+    @app.get("/api/v1/metrics")
+    async def query_metrics(
+        app: str = "",
+        name: str = "",
+        host: str = "",
+        since: str = "",
+        until: str = "",
+        limit: int = 100,
+    ) -> JSONResponse:
+        """Query stored metrics."""
+        if not store:
+            return JSONResponse(content={"error": "Storage not available"}, status_code=503)
+
+        query_kwargs: dict[str, Any] = {"limit": limit}
+        if app:
+            query_kwargs["app"] = app
+        if name:
+            query_kwargs["name"] = name
+        if host:
+            query_kwargs["host"] = host
+        if since:
+            try:
+                query_kwargs["since"] = datetime.fromisoformat(since)
+            except ValueError:
+                pass
+        if until:
+            try:
+                query_kwargs["until"] = datetime.fromisoformat(until)
+            except ValueError:
+                pass
+
+        try:
+            results = store.query_metrics(**query_kwargs)
+        except Exception as e:
+            return JSONResponse(content={"error": str(e)}, status_code=500)
+
+        return JSONResponse(content={
+            "count": len(results),
+            "results": jsonable_encoder(results),
         })
 
     @app.get("/api/v1/query")
@@ -1176,7 +1389,10 @@ def run_serve(args) -> None:
 
         try:
             results = store.query(**query_kwargs)  # type: ignore[arg-type]
-            return JSONResponse(content={"count": len(results), "results": results})
+            return JSONResponse(content={
+                "count": len(results),
+                "results": jsonable_encoder(results),
+            })
         except Exception as e:
             return JSONResponse(content={"error": str(e)}, status_code=500)
 
@@ -1249,6 +1465,112 @@ def run_serve(args) -> None:
 
         result = export_to_navigator(records)
         return JSONResponse(content=result)
+
+    # ── Bootstrap Endpoints (installer scripts) ─────────────────────────
+    from fastapi.responses import PlainTextResponse
+
+    def _build_installer_script(mode: str, params: dict[str, str]) -> str:
+        import os
+        base_dir = os.path.dirname(__file__)
+        if mode == "systemd":
+            installer_path = os.path.join(base_dir, "deploy", "install.sh")
+        else:
+            installer_path = os.path.join(base_dir, "deploy", "install-docker.sh")
+        with open(installer_path, "r") as f:
+            body = f.read()
+        flags: list[str] = []
+        def add(k: str, flag: str):
+            v = params.get(k, "")
+            if v:
+                flags.extend([flag, v])
+        if mode == "systemd":
+            add("repo", "--repo")
+            add("branch", "--branch")
+            add("augur_url", "--augur-url")
+            add("augur_api_key", "--augur-api-key")
+            add("threatpulse_url", "--threatpulse-url")
+            add("threatpulse_api_key", "--threatpulse-api-key")
+            add("db_dsn", "--db-dsn")
+            add("rsyslog_host", "--rsyslog-host")
+            add("rsyslog_protocol", "--rsyslog-protocol")
+        else:
+            add("docker_image", "--image")
+            add("api_key", "--api-key")
+            add("db_dsn", "--db-dsn")
+            add("augur_url", "--augur-url")
+            add("augur_api_key", "--augur-api-key")
+            add("threatpulse_url", "--threatpulse-url")
+            add("threatpulse_api_key", "--threatpulse-api-key")
+        flags_str = " ".join([f'"{v}"' if (" " in v and not v.startswith("--")) else v for v in flags])
+        script = f"""#!/usr/bin/env bash
+set -euo pipefail
+# Self-contained LogSentry {mode} installer (served by logsentry)
+cat > /tmp/logsentry-install.{ 'sh' if mode=='systemd' else 'docker.sh' } <<'INSTALLER'
+{body}
+INSTALLER
+chmod +x /tmp/logsentry-install.{ 'sh' if mode=='systemd' else 'docker.sh' }
+sudo /tmp/logsentry-install.{ 'sh' if mode=='systemd' else 'docker.sh' } {flags_str}
+"""
+        return script
+
+    @app.get("/bootstrap")
+    async def bootstrap(
+        mode: str = "systemd",
+        repo: str = "https://github.com/glopez21/logsentry",
+        branch: str = "",
+        db_dsn: str = config["storage"].get("dsn", ""),
+        api_key: str = config.get("server", {}).get("api_key", ""),
+        augur_url: str = config.get("augur", {}).get("hub_url", ""),
+        augur_api_key: str = config.get("augur", {}).get("api_key", ""),
+        threatpulse_url: str = config.get("threatpulse", {}).get("api_url", ""),
+        threatpulse_api_key: str = config.get("threatpulse", {}).get("api_key", ""),
+        docker_image: str = "ghcr.io/glopez21/logsentry:latest",
+        rsyslog_host: str = "",
+        rsyslog_protocol: str = "udp",
+    ) -> PlainTextResponse:
+        params = {
+            "repo": repo,
+            "branch": branch,
+            "db_dsn": db_dsn,
+            "api_key": api_key,
+            "augur_url": augur_url,
+            "augur_api_key": augur_api_key,
+            "threatpulse_url": threatpulse_url,
+            "threatpulse_api_key": threatpulse_api_key,
+            "docker_image": docker_image,
+            "rsyslog_host": rsyslog_host,
+            "rsyslog_protocol": rsyslog_protocol,
+        }
+        mode_use = "docker" if mode.lower() == "docker" else "systemd"
+        return PlainTextResponse(_build_installer_script(mode_use, params), media_type="text/plain")
+
+    @app.get("/bootstrap/systemd")
+    async def bootstrap_systemd() -> PlainTextResponse:
+        params = {
+            "repo": "https://github.com/glopez21/logsentry",
+            "branch": "",
+            "db_dsn": config["storage"].get("dsn", ""),
+            "augur_url": config.get("augur", {}).get("hub_url", ""),
+            "augur_api_key": config.get("augur", {}).get("api_key", ""),
+            "threatpulse_url": config.get("threatpulse", {}).get("api_url", ""),
+            "threatpulse_api_key": config.get("threatpulse", {}).get("api_key", ""),
+            "rsyslog_host": "",
+            "rsyslog_protocol": "udp",
+        }
+        return PlainTextResponse(_build_installer_script("systemd", params))
+
+    @app.get("/bootstrap/docker")
+    async def bootstrap_docker() -> PlainTextResponse:
+        params = {
+            "docker_image": "ghcr.io/glopez21/logsentry:latest",
+            "api_key": config.get("server", {}).get("api_key", ""),
+            "db_dsn": config["storage"].get("dsn", ""),
+            "augur_url": config.get("augur", {}).get("hub_url", ""),
+            "augur_api_key": config.get("augur", {}).get("api_key", ""),
+            "threatpulse_url": config.get("threatpulse", {}).get("api_url", ""),
+            "threatpulse_api_key": config.get("threatpulse", {}).get("api_key", ""),
+        }
+        return PlainTextResponse(_build_installer_script("docker", params))
 
     # ── Prometheus /metrics ────────────────────────────────────────
     from fastapi.responses import PlainTextResponse
@@ -1371,8 +1693,9 @@ def run_serve(args) -> None:
         if request.url.path.endswith("/tail/ws"):
             return await call_next(request)
         header_key = request.headers.get("Authorization", "").removeprefix("Bearer ")
+        x_api_key = request.headers.get("x-api-key") or request.headers.get("X-API-Key")
         query_key = request.query_params.get("api_key", "")
-        if header_key == api_key or query_key == api_key:
+        if header_key == api_key or query_key == api_key or x_api_key == api_key:
             return await call_next(request)
         from fastapi.responses import JSONResponse
         return JSONResponse(content={"error": "Unauthorized"}, status_code=401)
@@ -1506,6 +1829,25 @@ def parse_log_line(line: str) -> Optional[dict]:
     
     # Fallback to syslog
     return parse_syslog(line)
+
+
+def _record_to_insert(parsed: dict, raw: str) -> dict:
+    """Map a parser result into the insert_log() record shape."""
+    return {
+        "timestamp": parsed.get("timestamp") or datetime.now(timezone.utc),
+        "message": parsed.get("message") or raw,
+        "labels": {"source": "http", "host": parsed.get("host", "unknown")},
+        "source": "http",
+        "format": parsed.get("format", "syslog"),
+        "host": parsed.get("host", ""),
+        "source_ip": parsed.get("source_ip", ""),
+        "user_name": parsed.get("user", ""),
+        "event_type": parsed.get("event_type", ""),
+        "severity": parsed.get("severity", "info"),
+        "parsed": parsed,
+        "mitre_id": ([parsed["mitre_tactic"]] if parsed.get("mitre_tactic") else []),
+        "raw_message": raw,
+    }
 
 
 if __name__ == "__main__":

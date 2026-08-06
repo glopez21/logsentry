@@ -18,6 +18,18 @@
 - No graceful SIGHUP reload — daemon must be restarted to pick up config changes.
 - **Daemon logging**: no stdout/stderr handler configured — `journalctl -u augur-logsentry` shows nothing after successful startup. Python `logging` module uses `NullHandler` by default; needs a `StreamHandler` or `logging.basicConfig()` in daemon startup.
 
+## SOC Deployment — 192.168.1.33 Forwarders → Engine on .30 (2026-08-05)
+
+Priority-ordered open items (easy → complex), none fixed yet:
+
+1. **[EASY] Switch container forwarders 5514 → 514** — all 6 LXC containers on 192.168.1.33 still send syslog to test port 5514; change `/etc/rsyslog.d/90-logsentry.conf` to `192.168.1.30:514` and restart rsyslog so logs actually reach the engine.
+2. **[EASY] Guard `apply_tenant_filter` in Augur agent heartbeat** — Augur's `POST /agents/heartbeat` fails closed (`WHERE false()`) when no tenant context → 404 even with a valid agent token; engine heartbeats never succeed. Augur-side fix (same guard already applied to register).
+3. **[MEDIUM] Persist augur-client auth_token fix** — engine client now stores the per-agent `auth_token` from register and uses it as Bearer (was sending API key → 401). Copied into running container only; image still installs augur-client from git, so rebuild loses it.
+4. **[RESOLVED 2026-08-05] Log storage fails: `'str' object has no attribute 'strftime'`** — parsers return string timestamps (RFC 5424/3164/ISO) but the store layer called `ts.strftime()` on them. Fixed by adding `_coerce_timestamp()` in `db/store.py` and applying it at all insert boundaries (sync `insert_log`/`insert_logs_batch`, async `insert_log`/`insert_logs_batch`). Verified live: UDP packets on :514 parsed and stored in `logsentry.logs` (host/event_type/severity populated), health shows `logs_stored: 4`. **NOTE**: fix copied into running container only (`docker cp`); commit to repo and rebuild image to persist.
+5. **[MEDIUM] Verify end-to-end** — confirmed 2026-08-05: packets sent to :514 are parsed (event_type `syslog_rfc5424`, severity, host) and stored in `logsentry.logs` on .33; `logs_stored` counter increments.
+6. **[MEDIUM] Run shadowsim** — `/home/w01f/projects/shadowsim` against the containers for rich traffic.
+7. **[COMPLEX] Ollama enrichment not reachable** — `/api/v1/health` shows `ollama: reachable: false` on Augur side.
+
 ## Deployment
 
 - `/home/w01f/projects/logsentry/logsentry.yaml` hardcoded path removed from `config/config.py` defaults — now searches `/etc/logsentry/`, `./`, `~/.config/logsentry/`.

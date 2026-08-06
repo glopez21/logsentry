@@ -1,0 +1,38 @@
+agent:
+  name: "local-test-agent"
+  type: "endpoint"
+
+hub:
+  url: "http://localhost:8000"
+  api_key: "CHANGE-ME-IN-PRODUCTION"
+  heartbeat_interval: 15
+  ws_enabled: false
+  ws_url: null
+
+ingest:
+  syslog:
+    enabled: false
+    bind: "0.0.0.0"
+    port: 514
+    protocol: "udp"
+  file_watchers:
+    enabled: false
+    paths: []
+    patterns: []
+  journald:
+    enabled: false
+    units: []
+
+detection:
+  enabled: false
+  rules: []
+
+discovery:
+  enabled: true
+  interval: 300
+  runtimes: ["docker", "containerd", "podman"]
+
+store:
+  path: "/tmp/sentryd-test.db"
+  retention_days: 1
+  max_pending: 1000

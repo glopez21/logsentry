@@ -1,16 +1,13 @@
 """PostgreSQL schema definitions and migration runner."""
 
 SCHEMA_SQL = """
--- 1. Create extension for full-text search
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
--- 2. Create schemas for all tools (idempotent)
+-- 1. Create schemas for all tools (idempotent)
 CREATE SCHEMA IF NOT EXISTS logsentry;
 CREATE SCHEMA IF NOT EXISTS alertflow;
 CREATE SCHEMA IF NOT EXISTS threatpulse;
 CREATE SCHEMA IF NOT EXISTS shared;
 
--- 3. Core logs table (partitioned by day)
+-- 2. Core logs table (partitioned by day)
 CREATE TABLE IF NOT EXISTS logsentry.logs (
     id          BIGSERIAL,
     timestamp   TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -29,12 +26,9 @@ CREATE TABLE IF NOT EXISTS logsentry.logs (
     PRIMARY KEY (id, timestamp)
 ) PARTITION BY RANGE (timestamp);
 
--- 4. Create partitions for current + next 2 months
-SELECT logsentry.create_partition(to_char(now(), 'YYYY_MM'));
-SELECT logsentry.create_partition(to_char(now() + interval '1 month', 'YYYY_MM'));
-SELECT logsentry.create_partition(to_char(now() + interval '2 months', 'YYYY_MM'));
+-- 4. Partitions are created on demand via logsentry.create_partition()
 
--- 5. Indexes on the parent (propagate to partitions)
+-- 3. Indexes on the parent (propagate to partitions)
 CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logsentry.logs (timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_logs_labels ON logsentry.logs USING GIN (labels);
 CREATE INDEX IF NOT EXISTS idx_logs_severity ON logsentry.logs (severity);
@@ -42,11 +36,11 @@ CREATE INDEX IF NOT EXISTS idx_logs_source_ip ON logsentry.logs (source_ip);
 CREATE INDEX IF NOT EXISTS idx_logs_event_type ON logsentry.logs (event_type);
 CREATE INDEX IF NOT EXISTS idx_logs_mitre ON logsentry.logs USING GIN (mitre_id);
 
--- 6. Full-text search index
+-- 4. Full-text search index
 CREATE INDEX IF NOT EXISTS idx_logs_fts ON logsentry.logs
     USING GIN (to_tsvector('english', coalesce(message, '')));
 
--- 7. Detections table — results of each detection pipeline run
+-- 5. Detections table — results of each detection pipeline run
 CREATE TABLE IF NOT EXISTS logsentry.detections (
     id          BIGSERIAL PRIMARY KEY,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -65,7 +59,27 @@ CREATE INDEX IF NOT EXISTS idx_detections_created ON logsentry.detections (creat
 CREATE INDEX IF NOT EXISTS idx_detections_severity ON logsentry.detections (severity);
 CREATE INDEX IF NOT EXISTS idx_detections_rule ON logsentry.detections (rule_name);
 
--- 8. Threat intelligence cache
+-- 6. Metrics table — numeric measurements posted by collector agents
+--    (weathergen, sysmetgen, ...). Stored alongside logs for unified reporting.
+CREATE TABLE IF NOT EXISTS logsentry.metrics (
+    id          BIGSERIAL PRIMARY KEY,
+    timestamp   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    source      TEXT NOT NULL DEFAULT 'agent',
+    host        TEXT,
+    app         TEXT,
+    name        TEXT NOT NULL,
+    value       DOUBLE PRECISION NOT NULL,
+    unit        TEXT DEFAULT '',
+    labels      JSONB DEFAULT '{}',
+    raw_data    JSONB
+);
+
+CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON logsentry.metrics (timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_metrics_name ON logsentry.metrics (name);
+CREATE INDEX IF NOT EXISTS idx_metrics_host ON logsentry.metrics (host);
+CREATE INDEX IF NOT EXISTS idx_metrics_app ON logsentry.metrics (app);
+
+-- 6. Threat intelligence cache
 CREATE TABLE IF NOT EXISTS logsentry.threat_intel_cache (
     ip          TEXT PRIMARY KEY,
     data        JSONB NOT NULL,
@@ -75,7 +89,7 @@ CREATE TABLE IF NOT EXISTS logsentry.threat_intel_cache (
 -- Skip: expression index on (updated_at + ttl_seconds * interval) causes
 -- syntax issues on some PostgreSQL versions. Expiry is checked in queries.
 
--- 9. Shared cross-project tables
+-- 7. Shared cross-project tables
 CREATE TABLE IF NOT EXISTS shared.hosts (
     id          SERIAL PRIMARY KEY,
     hostname    TEXT UNIQUE NOT NULL,
@@ -177,8 +191,8 @@ DEFAULT_LABELS = {
 def get_all_sql() -> list[str]:
     """Return all SQL statements to initialize the schema."""
     return [
-        PARTITION_CREATE_FN,
         SCHEMA_SQL,
+        PARTITION_CREATE_FN,
         DROP_PARTITION_FN,
         RETENTION_FN,
     ]

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "logsentry.fullname" . }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ include "logsentry.name" . }}
+  type: {{ .Values.service.type }}
+  ports:
+    - name: syslog-udp
+      port: {{ .Values.service.ports.syslogUdp }}
+      targetPort: 514
+      protocol: UDP
+    - name: syslog-tcp
+      port: {{ .Values.service.ports.syslogTcp }}
+      targetPort: 514
+      protocol: TCP
+    - name: api
+      port: {{ .Values.service.ports.api }}
+      targetPort: 8080
+      protocol: TCP

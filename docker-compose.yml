@@ -22,6 +22,7 @@ services:
     environment:
       LOGSENTRY_DSN: postgresql://logsentry:${LOGSENTRY_DB_PASSWORD:-logsentry}@postgres:5432/logsentry
       LOGSENTRY_MODE: daemon
+      LOGSENTRY_API_KEY: ${LOGSENTRY_API_KEY:-}
       VT_API_KEY: ${VT_API_KEY:-}
       ABUSEIPDB_API_KEY: ${ABUSEIPDB_API_KEY:-}
       OTX_API_KEY: ${OTX_API_KEY:-}
@@ -29,8 +30,11 @@ services:
       AUGUR_URL: ${AUGUR_URL:-}
       AUGUR_API_KEY: ${AUGUR_API_KEY:-}
       AUGUR_AGENT_NAME: ${AUGUR_AGENT_NAME:-logsentry}
+      THREATPULSE_URL: ${THREATPULSE_URL:-}
+      THREATPULSE_API_KEY: ${THREATPULSE_API_KEY:-}
     ports:
       - "514:514/udp"
+      - "514:514/tcp"
       - "8080:8080"
     volumes:
       - logs:/var/log

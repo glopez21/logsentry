@@ -14,6 +14,39 @@ import psycopg2.extras
 logger = logging.getLogger("logsentry.db")
 
 
+def _coerce_timestamp(ts: Any) -> datetime:
+    """Normalize a timestamp value to a tz-aware datetime.
+
+    Parsers may hand us RFC 5424/3164 or ISO-8601 strings; the store layer
+    requires a datetime for partition suffix computation and column binding.
+    """
+    if isinstance(ts, datetime):
+        return ts
+    if ts is None:
+        return datetime.now(timezone.utc)
+    s = str(ts).strip()
+    parsed: datetime | None = None
+    try:
+        parsed = datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        pass
+    if parsed is None:
+        for fmt in ("%b %d %H:%M:%S", "%b %e %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%d/%b/%Y:%H:%M:%S"):
+            try:
+                parsed = datetime.strptime(s, fmt)
+                break
+            except ValueError:
+                continue
+        if parsed is not None and parsed.year == 1900:
+            parsed = parsed.replace(year=datetime.now(timezone.utc).year)
+    if parsed is None:
+        logger.warning("Unparseable timestamp %r, falling back to now", ts)
+        return datetime.now(timezone.utc)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
 try:
     import asyncpg
 except ImportError:
@@ -32,6 +65,9 @@ class LogStore:
         flush_interval: float = 5.0,
     ):
         self.dsn = dsn
+        # Persist configured pool sizes so connect() uses caller-provided values.
+        self._min_conn = min_conn
+        self._max_conn = max_conn
         self.batch_size = batch_size
         self.flush_interval = flush_interval
         self._pool: psycopg2.pool.ThreadedConnectionPool | None = None
@@ -42,8 +78,8 @@ class LogStore:
     def connect(self) -> None:
         """Initialize the connection pool."""
         self._pool = psycopg2.pool.ThreadedConnectionPool(
-            maxconn=self.max_conn,
-            minconn=self.min_conn,
+            maxconn=self._max_conn,
+            minconn=self._min_conn,
             dsn=self.dsn,
         )
         logger.info(
@@ -52,11 +88,13 @@ class LogStore:
 
     @property
     def max_conn(self) -> int:
-        return self._pool.maxconn if self._pool else 10
+        # Report actual configured max size even before pool is created
+        return self._pool.maxconn if self._pool else getattr(self, "_max_conn", 10)
 
     @property
     def min_conn(self) -> int:
-        return self._pool.minconn if self._pool else 2
+        # Report actual configured min size even before pool is created
+        return self._pool.minconn if self._pool else getattr(self, "_min_conn", 2)
 
     def close(self) -> None:
         """Close all connections in the pool."""
@@ -85,6 +123,15 @@ class LogStore:
         conn = self.get_conn()
         try:
             with conn.cursor() as cur:
+                # Ensure base schemas exist before running any dependent statements
+                cur.execute(
+                    """
+                    CREATE SCHEMA IF NOT EXISTS logsentry;
+                    CREATE SCHEMA IF NOT EXISTS alertflow;
+                    CREATE SCHEMA IF NOT EXISTS threatpulse;
+                    CREATE SCHEMA IF NOT EXISTS shared;
+                    """
+                )
                 for block in get_all_sql():
                     cur.execute(block)
             conn.commit()
@@ -144,6 +191,7 @@ class LogStore:
         raw_message: str | None = None,
     ) -> int:
         """Insert a single log entry, returning the ID."""
+        timestamp = _coerce_timestamp(timestamp)
         self.ensure_partition(timestamp)
         conn = self.get_conn()
         try:
@@ -191,18 +239,22 @@ class LogStore:
         if not records:
             return 0
 
-        # Ensure partitions exist for all dates
+        # Ensure partitions exist for all distinct months in the batch
+        seen_months: set[str] = set()
         for r in records:
-            ts = r.get("timestamp")
+            ts = _coerce_timestamp(r.get("timestamp"))
             if ts:
-                self.ensure_partition(ts)
+                suffix = ts.strftime("%Y_%m")
+                if suffix not in seen_months:
+                    self.ensure_partition(ts)
+                    seen_months.add(suffix)
 
         conn = self.get_conn()
         try:
             with conn.cursor() as cur:
                 rows = []
                 for r in records:
-                    ts = r.get("timestamp", datetime.now(timezone.utc))
+                    ts = _coerce_timestamp(r.get("timestamp"))
                     rows.append((
                         ts,
                         json.dumps(r.get("labels", {})),
@@ -234,6 +286,99 @@ class LogStore:
                 inserted: int = cur.rowcount or 0
             conn.commit()
             return inserted
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            self.put_conn(conn)
+
+    # ── Metrics ───────────────────────────────────────────────────
+
+    def insert_metrics_batch(self, metrics: list[dict]) -> int:
+        """Batch insert metric measurements.
+
+        Each metric record should have: name, value, and optional
+        timestamp/source/host/app/unit/labels/raw_data. Returns count.
+        """
+        if not metrics:
+            return 0
+
+        conn = self.get_conn()
+        try:
+            with conn.cursor() as cur:
+                rows = [
+                    (
+                        _coerce_timestamp(m.get("timestamp")),
+                        m.get("source", "agent"),
+                        m.get("host", "") or "",
+                        m.get("app", "") or "",
+                        m.get("name"),
+                        float(m.get("value")),
+                        m.get("unit", "") or "",
+                        json.dumps(m.get("labels", {})),
+                        json.dumps(m.get("raw_data")) if m.get("raw_data") else None,
+                    )
+                    for m in metrics
+                ]
+                psycopg2.extras.execute_values(
+                    cur,
+                    """
+                    INSERT INTO logsentry.metrics
+                        (timestamp, source, host, app, name, value, unit,
+                         labels, raw_data)
+                    VALUES %s
+                    """,
+                    rows,
+                )
+                inserted: int = cur.rowcount or 0
+            conn.commit()
+            return inserted
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            self.put_conn(conn)
+
+    def query_metrics(
+        self,
+        app: str | None = None,
+        name: str | None = None,
+        host: str | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        """Query metrics with filters. Returns list of dicts."""
+        conditions: list[str] = []
+        params: list[Any] = []
+
+        if app:
+            conditions.append("app = %s")
+            params.append(app)
+        if name:
+            conditions.append("name = %s")
+            params.append(name)
+        if host:
+            conditions.append("host = %s")
+            params.append(host)
+        if since:
+            conditions.append("timestamp >= %s")
+            params.append(since)
+        if until:
+            conditions.append("timestamp <= %s")
+            params.append(until)
+
+        sql = "SELECT * FROM logsentry.metrics"
+        if conditions:
+            sql += " WHERE " + " AND ".join(conditions)
+        sql += " ORDER BY timestamp DESC LIMIT %s"
+        params.append(max(1, min(int(limit), 1000)))
+
+        conn = self.get_conn()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(sql, params)
+                return [dict(row) for row in cur.fetchall()]
         except Exception:
             conn.rollback()
             raise
@@ -523,7 +668,7 @@ class AsyncLogStore:
             return row or 0
 
     async def insert_log(self, **kwargs: Any) -> int:
-        ts = kwargs.get("timestamp", datetime.now(timezone.utc))
+        ts = _coerce_timestamp(kwargs.get("timestamp"))
         await self.ensure_partition(ts)
         if not self._pool:
             raise RuntimeError("Not connected")
@@ -559,7 +704,7 @@ class AsyncLogStore:
 
         seen_months: set[str] = set()
         for r in records:
-            ts = r.get("timestamp")
+            ts = _coerce_timestamp(r.get("timestamp"))
             if ts:
                 suffix = ts.strftime("%Y_%m")
                 if suffix not in seen_months:
@@ -569,7 +714,7 @@ class AsyncLogStore:
         async with self._pool.acquire() as conn:
             rows = []
             for r in records:
-                ts = r.get("timestamp", datetime.now(timezone.utc))
+                ts = _coerce_timestamp(r.get("timestamp"))
                 rows.append((
                     ts,
                     json.dumps(r.get("labels", {})),

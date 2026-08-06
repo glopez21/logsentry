@@ -37,7 +37,8 @@ class FileTailCollector:
         parser: Optional[Callable] = None,
         callback: Optional[Callable] = None,
         console: Console | None = None,
-        follow_delay: float = 0.1
+        follow_delay: float = 0.1,
+        register_signals: bool = True,
     ):
         self.filepath = filepath
         self.parser = parser
@@ -50,8 +51,11 @@ class FileTailCollector:
         self._file: IO[str] | None = None
         self._lock = threading.Lock()
         
-        signal.signal(signal.SIGINT, self._signal_handler)
-        signal.signal(signal.SIGTERM, self._signal_handler)
+        # Only register signal handlers when running standalone (CLI mode).
+        # In daemon mode the parent process owns the signal handlers.
+        if register_signals:
+            signal.signal(signal.SIGINT, self._signal_handler)
+            signal.signal(signal.SIGTERM, self._signal_handler)
     
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals."""

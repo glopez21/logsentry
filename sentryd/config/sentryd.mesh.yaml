@@ -1,0 +1,53 @@
+# sentryd config for mesh deployment
+# hub.url is auto-discovered by the mesh sidecar
+agent:
+  name: "${HOSTNAME:-sentryd-agent}"
+  type: "endpoint"
+
+hub:
+  url: "http://mesh-hub:8000"     # overridden by mesh-discover.py
+  api_key: "${AUGUR_API_KEY:-}"
+  heartbeat_interval: 30
+
+ingest:
+  syslog:
+    enabled: false
+    bind: "0.0.0.0"
+    port: 514
+    protocol: "udp"
+  file_watchers:
+    enabled: true
+    paths:
+      - "/var/log/"
+    patterns:
+      - "/var/log/auth.log"
+      - "/var/log/syslog"
+      - "/var/log/nginx/access.log"
+      - "/var/log/firewall.log"
+  journald:
+    enabled: false
+    units: ["ssh", "nginx"]
+
+detection:
+  enabled: true
+  rules:
+    - name: "ssh_brute_force"
+      event_type: "ssh"
+      threshold: 10
+      window: "60s"
+      severity: "critical"
+    - name: "suspicious_ip"
+      event_type: "ssh"
+      threshold: 1
+      window: "300s"
+      severity: "high"
+    - name: "privilege_escalation"
+      event_type: "auth"
+      threshold: 1
+      window: "300s"
+      severity: "high"
+
+store:
+  path: "/var/lib/sentryd/events.db"
+  retention_days: 7
+  max_pending: 10000

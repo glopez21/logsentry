@@ -38,6 +38,7 @@ sentry-agent = { path = "../sentry-agent" }
 sentry-ingest = { path = "../sentry-ingest" }
 sentry-detect = { path = "../sentry-detect" }
 sentry-exec = { path = "../sentry-exec" }
+sentry-containers = { path = "../sentry-containers" }
 clap = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }

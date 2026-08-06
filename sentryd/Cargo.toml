@@ -23,6 +23,7 @@ members = [
     "crates/sentry-ingest",
     "crates/sentry-detect",
     "crates/sentry-exec",
+    "crates/sentry-containers",
     "crates/sentryd",
 ]
 
@@ -80,3 +81,6 @@ regex = "1"
 uuid = { version = "1", features = ["v4", "serde"] }
 glob = "0.3"
 url = "2"
+tokio-tungstenite = "0.24"
+tungstenite = "0.24"
+futures-util = { version = "0.3", features = ["sink"] }

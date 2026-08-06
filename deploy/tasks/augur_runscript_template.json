@@ -1,0 +1,6 @@
+{
+  "type": "RunScript",
+  "interpreter": "bash",
+  "timeout_secs": 900,
+  "script": "#!/usr/bin/env bash\nset -euo pipefail\n# This script will install LogSentry engine (docker mode)\n# Replace placeholders below or generate a tailored script via /bootstrap\nENGINE_DSN=\"postgresql://logsentry:logsentry@<DB_HOST>:5432/logsentry\"\nLOGSENTRY_API_KEY=\"<SERVER_API_KEY>\"\nAUGUR_URL=\"<AUGUR_URL>\"\nAUGUR_API_KEY=\"<AUGUR_API_KEY>\"\nTHREATPULSE_URL=\"<THREATPULSE_URL>\"\nTHREATPULSE_API_KEY=\"<THREATPULSE_API_KEY>\"\n\ncurl -sL https://raw.githubusercontent.com/w01f/logsentry/main/deploy/install-docker.sh -o /tmp/logsentry-install-docker.sh\nchmod +x /tmp/logsentry-install-docker.sh\n/tmp/logsentry-install-docker.sh --db-dsn \"$ENGINE_DSN\" --api-key \"$LOGSENTRY_API_KEY\" \\\n  ${AUGUR_URL:+--augur-url \"$AUGUR_URL\"} ${AUGUR_API_KEY:+--augur-api-key \"$AUGUR_API_KEY\"} \\\n  ${THREATPULSE_URL:+--threatpulse-url \"$THREATPULSE_URL\"} ${THREATPULSE_API_KEY:+--threatpulse-api-key \"$THREATPULSE_API_KEY\"}"
+}

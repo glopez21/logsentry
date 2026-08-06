@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "logsentry.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "logsentry.name" . }}
+    helm.sh/chart: {{ include "logsentry.chart" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "logsentry.name" . }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "logsentry.name" . }}
+    spec:
+      containers:
+        - name: logsentry
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: syslog-udp
+              containerPort: 514
+              protocol: UDP
+            - name: syslog-tcp
+              containerPort: 514
+              protocol: TCP
+            - name: api
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: LOGSENTRY_DSN
+              value: {{ .Values.dsn | quote }}
+            - name: LOGSENTRY_MODE
+              value: "daemon"
+            - name: LOGSENTRY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsentry.fullname" . }}
+                  key: LOGSENTRY_API_KEY
+            - name: AUGUR_URL
+              value: {{ .Values.augur.url | quote }}
+            - name: AUGUR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsentry.fullname" . }}
+                  key: AUGUR_API_KEY
+            - name: THREATPULSE_URL
+              value: {{ .Values.threatpulse.url | quote }}
+            - name: THREATPULSE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsentry.fullname" . }}
+                  key: THREATPULSE_API_KEY
+          volumeMounts:
+            - name: config
+              mountPath: /etc/logsentry/logsentry.yaml
+              subPath: logsentry.yaml
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "logsentry.fullname" . }}

@@ -235,6 +235,12 @@ uv sync --extra integrations # For STIX
 - [README](README.md) - Overview and quick start
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Technical architecture
 - [CHANGELOG.md](CHANGELOG.md) - Version history
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Centralized engine deployment (Compose/K8s) and rsyslog configs
+
+Quick installers
+- Systemd VM/VPS: deploy/install.sh (one-liner via curl; clones repo, sets up venv and service)
+- Docker: deploy/install-docker.sh (pulls image, writes config, runs container)
+- API-served installers: GET /bootstrap?mode=systemd|docker (requires server.api_key)
 
 ---
 

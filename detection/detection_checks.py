@@ -41,31 +41,104 @@ def run_detection_checks(records: list[dict]) -> dict:
 
 
 def find_failed_login_bursts(records: list[dict], threshold: int = 5, window_minutes: int = 10) -> list[str]:
-    """Find failed login bursts from same source. O(n) using Counter."""
+    """Find failed login bursts from same source within a time window.
+
+    Uses a sliding window per source IP/user to detect bursts. If timestamps
+    are unparseable, falls back to total-count detection (no windowing).
+    """
     from collections import Counter
+    from datetime import datetime, timedelta
 
     failed = [r for r in records if "fail" in r.get("event_type", "").lower()]
     if not failed:
         return []
 
-    ip_counts: Counter = Counter()
-    user_counts: Counter = Counter()
+    def _parse_ts(ts_val: str) -> datetime | None:
+        """Best-effort parse of timestamp string to datetime."""
+        if isinstance(ts_val, datetime):
+            return ts_val
+        if not ts_val:
+            return None
+        for fmt in (
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%dT%H:%M:%S.%f",
+            "%Y-%m-%dT%H:%M:%SZ",
+            "%Y-%m-%dT%H:%M:%S%z",
+            "%Y-%m-%dT%H:%M:%S.%f%z",
+            "%b %d %H:%M:%S",
+            "%Y/%m/%d %H:%M:%S",
+        ):
+            try:
+                return datetime.strptime(ts_val, fmt)
+            except ValueError:
+                continue
+        # Handle "Jan 15 10:30:00 2026" (ssh/syslog with year at end)
+        try:
+            dt = datetime.strptime(ts_val, "%b %d %H:%M:%S %Y")
+            return dt
+        except ValueError:
+            pass
+        return None
+
+    # Attempt windowed detection — if no timestamps are parseable, fall back
+    # to simple counter-based detection for backward compatibility.
+    ip_events: dict[str, list[tuple[datetime, str]]] = {}
+    user_events: dict[str, list[tuple[datetime, str]]] = {}
+    any_parsed = False
 
     for r in failed:
+        ts = _parse_ts(r.get("timestamp", ""))
         src_ip = r.get("source_ip", "")
         user = r.get("user", "")
-        if src_ip:
-            ip_counts[src_ip] += 1
-        if user:
-            user_counts[user] += 1
+        if ts and src_ip:
+            ip_events.setdefault(src_ip, []).append((ts, user))
+            any_parsed = True
+        if ts and user:
+            user_events.setdefault(user, []).append((ts, src_ip))
+            any_parsed = True
 
+    if not any_parsed:
+        # Fallback: count all failures (no windowing)
+        ip_counts: Counter = Counter()
+        user_counts: Counter = Counter()
+        for r in failed:
+            src_ip = r.get("source_ip", "")
+            user = r.get("user", "")
+            if src_ip:
+                ip_counts[src_ip] += 1
+            if user:
+                user_counts[user] += 1
+        bursts: list[str] = []
+        for src, count in ip_counts.most_common():
+            if count >= threshold:
+                bursts.append(f"{src}: {count} failed attempts")
+        for user, count in user_counts.most_common():
+            if count >= threshold:
+                bursts.append(f"{user}: {count} failed attempts")
+        return bursts[:10]
+
+    window = timedelta(minutes=window_minutes)
     bursts = []
-    for src, count in ip_counts.most_common():
-        if count >= threshold:
-            bursts.append(f"{src}: {count} failed attempts")
-    for user, count in user_counts.most_common():
-        if count >= threshold:
-            bursts.append(f"{user}: {count} failed attempts")
+
+    # Sliding window burst detection per source IP
+    for src, events in ip_events.items():
+        events.sort(key=lambda x: x[0])
+        for ts_start, _ in events:
+            window_end = ts_start + window
+            count = sum(1 for ts, _ in events if ts <= window_end)
+            if count >= threshold:
+                bursts.append(f"{src}: {count} failed attempts (within {window_minutes}m window)")
+                break
+
+    # Sliding window burst detection per user
+    for user, events in user_events.items():
+        events.sort(key=lambda x: x[0])
+        for ts_start, _ in events:
+            window_end = ts_start + window
+            count = sum(1 for ts, _ in events if ts <= window_end)
+            if count >= threshold:
+                bursts.append(f"{user}: {count} failed attempts (within {window_minutes}m window)")
+                break
 
     return bursts[:10]
 

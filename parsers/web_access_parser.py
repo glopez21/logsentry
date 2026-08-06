@@ -1,5 +1,7 @@
 import re
 
+from parsers._common import split_syslog
+
 
 COMBINED_RE = re.compile(
     r'^(?P<ip>\S+)\s+'
@@ -24,6 +26,8 @@ SHORT_RE = re.compile(
 
 
 def parse_web_access(line: str) -> dict | None:
+    # Allow a leading syslog header (e.g. forwarded by rsyslog over the wire).
+    line, _hts, header_host = split_syslog(line)
     m = COMBINED_RE.match(line)
     if not m:
         m = SHORT_RE.match(line)
@@ -40,7 +44,7 @@ def parse_web_access(line: str) -> dict | None:
         sev = "info"
     return {
         "timestamp": g["timestamp"],
-        "host": "",
+        "host": header_host,
         "user": user,
         "source_ip": g["ip"],
         "destination_ip": "",

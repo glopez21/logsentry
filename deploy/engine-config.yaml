@@ -1,0 +1,88 @@
+engine:
+  mode: daemon
+  log_level: info
+  detection_interval: 30
+  stats_interval: 60
+
+storage:
+  dsn: postgresql://logsentry:aba83d7fc050022981216763e6fdd8bf@192.168.1.33:5432/logsentry
+  pool_min: 2
+  pool_max: 10
+  retention_days: 90
+  batch_size: 500
+  flush_interval: 5
+
+ingest:
+  syslog:
+    enabled: true
+    bind: 0.0.0.0
+    port: 514
+    protocol: both
+    rate_limit: 100.0
+    rate_burst: 200
+  http:
+    enabled: true
+  file_watchers:
+    enabled: false
+    paths:
+      - /var/log
+  overrides:
+    - { contains: "webtraffic", parser: "webtraffic" }
+    - { contains: "prober", parser: "prober" }
+    - { contains: "dnsgen", parser: "dnsgen" }
+    - { contains: "opslog", parser: "opslog" }
+    - { contains: "weblog", parser: "web_access" }
+
+detection:
+  enabled: true
+  rules:
+    - name: brute_force_burst
+      description: Multiple failed logins from same IP
+      severity: high
+      condition:
+        event_type: failed_login
+        threshold: 5
+        window: 5m
+    - name: ssh_root_login
+      description: SSH login as root
+      severity: high
+      condition:
+        event_type: ssh_login
+        user: root
+  alerts:
+    stdout:
+      enabled: true
+      format: json
+    webhook: ""
+    discord:
+      webhook_url: ""
+    slack:
+      webhook_url: ""
+    telegram:
+      bot_token: ""
+      chat_id: ""
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  api_key: ""
+
+schemas:
+  - logsentry
+  - alertflow
+  - threatpulse
+  - shared
+
+augur:
+  enabled: true
+  hub_url: "http://127.0.0.1:8000"
+  agent_name: "logsentry"
+  agent_type: "logsentry"
+  api_key: "e40711b81e2c18f11bf466e0f5577bcc6f1977607b32125d"
+  heartbeat_interval: 30
+
+threatpulse:
+  enabled: true
+  api_url: "http://127.0.0.1:8081/api/siem/api/v1"
+  api_key: ""
+  timeout: 5.0

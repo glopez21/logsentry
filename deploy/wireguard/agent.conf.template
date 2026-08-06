@@ -1,0 +1,26 @@
+# WireGuard agent configuration
+# Replace variables before deploying:
+#   AGENT_PRIVATE_KEY — generate with: wg genkey
+#   AGENT_PUBLIC_KEY  — derive with: wg pubkey < private.key
+#   HUB_PUBLIC_KEY    — the hub's public key (from hub setup)
+#   HUB_ENDPOINT      — hub's public IP:port (e.g., vpn.example.com:51820)
+#   AGENT_TUN_IP      — this agent's overlay IP (e.g., 10.200.0.10)
+#   OVERLAY_SUBNET    — only route hub traffic through WG (10.200.0.0/24)
+
+[Interface]
+Address = ${AGENT_TUN_IP}/24
+PrivateKey = ${AGENT_PRIVATE_KEY}
+DNS = ${HUB_DNS:-}
+MTU = 1420
+
+# Optional: route only overlay traffic through the tunnel
+# AllowedIPs = 10.200.0.0/24
+
+# Route ALL traffic through the tunnel (full tunnel)
+Table = auto
+
+[Peer]
+PublicKey = ${HUB_PUBLIC_KEY}
+Endpoint = ${HUB_ENDPOINT}
+AllowedIPs = ${OVERLAY_SUBNET:-10.200.0.0/24}
+PersistentKeepalive = 25

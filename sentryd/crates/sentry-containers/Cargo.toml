@@ -1,0 +1,10 @@
+[package]
+name = "sentry-containers"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sentry-core = { path = "../sentry-core" }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }

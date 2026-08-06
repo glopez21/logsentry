@@ -1,0 +1,159 @@
+# LogSentry + w3bv01d Mesh Full Stack
+# Start: docker compose -f deploy/docker-compose.mesh.yml up --build
+# This creates a mesh overlay where all services communicate over
+# the w3bv01d P2P encrypted mesh instead of direct Docker networking.
+
+services:
+
+  # ── Mesh Infrastructure ───────────────────────────────────────
+
+  coordinator:
+    image: w3bv01d:latest
+    build:
+      context: /home/w01f/projects/w3bv01d
+    ports:
+      - "8765:8765"
+    command: ["-m", "coordinator.server", "--host", "0.0.0.0", "--port", "8765"]
+    networks:
+      mesh:
+        ipv4_address: 10.88.0.10
+    restart: unless-stopped
+
+  relay:
+    image: w3bv01d:latest
+    build:
+      context: /home/w01f/projects/w3bv01d
+    ports:
+      - "3478:3478/udp"
+    command: ["-m", "relay.server", "--host", "0.0.0.0", "--port", "3478"]
+    networks:
+      mesh:
+        ipv4_address: 10.88.0.11
+    restart: unless-stopped
+
+  # ── Augur SOC Hub (mesh peer + API) ──────────────────────────
+
+  augur-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: augur
+      POSTGRES_USER: augur
+      POSTGRES_PASSWORD: ${AUGUR_DB_PASSWORD:-augur}
+    volumes:
+      - augur-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U augur"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      mesh:
+        ipv4_address: 10.88.0.2
+
+  augur-hub:
+    build:
+      context: /home/w01f/projects/augur/backend
+    depends_on:
+      augur-db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://augur:${AUGUR_DB_PASSWORD:-augur}@10.88.0.2:5432/augur
+      SECRET_KEY: ${AUGUR_SECRET_KEY:-change-me-in-production}
+    ports:
+      - "8000:8000"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    networks:
+      mesh:
+        ipv4_address: 10.88.0.1
+    restart: unless-stopped
+
+  augur-mesh:
+    image: w3bv01d:latest
+    build:
+      context: /home/w01f/projects/w3bv01d
+    depends_on: [coordinator]
+    network_mode: "service:augur-hub"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOME=/data/augur
+    volumes:
+      - augur-mesh-data:/data/augur/.config/w3bv01d
+    command:
+      - "-m"
+      - "peer.node"
+      - "--coordinator"
+      - "ws://10.88.0.10:8765"
+      - "--relay"
+      - "10.88.0.11:3478"
+      - "--tun"
+      - "--port"
+      - "22001"
+    restart: unless-stopped
+
+  # ── sentryd Agent 1 (VPS) ────────────────────────────────────
+
+  sentryd-vps:
+    build:
+      context: .
+      dockerfile: sentryd/Dockerfile
+    depends_on: [coordinator, relay]
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    devices:
+      - /dev/net/tun
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOME=/data/sentryd-vps
+      - MESH_COORDINATOR=ws://10.88.0.10:8765
+      - MESH_RELAY=10.88.0.11:3478
+      - MESH_HUB_PEER_ID=augur-hub
+      - SENTRYD_CONFIG=/etc/sentryd/sentryd.yaml
+    volumes:
+      - sentryd-vps-data:/data/sentryd-vps/.config/w3bv01d
+      - sentryd-vps-logs:/var/log:ro
+      - ./sentryd/config/sentryd.mesh.yaml:/etc/sentryd/sentryd.yaml:ro
+    command: ["python3", "/app/scripts/mesh-discover.py", "--hub-peer-id", "augur-hub", "--hub-port", "8000", "sentryd", "daemon"]
+    restart: unless-stopped
+
+  # ── sentryd Agent 2 (Docker Host) ────────────────────────────
+
+  sentryd-docker:
+    build:
+      context: .
+      dockerfile: sentryd/Dockerfile
+    depends_on: [coordinator, relay]
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    devices:
+      - /dev/net/tun
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOME=/data/sentryd-docker
+      - MESH_COORDINATOR=ws://10.88.0.10:8765
+      - MESH_RELAY=10.88.0.11:3478
+      - MESH_HUB_PEER_ID=augur-hub
+      - SENTRYD_CONFIG=/etc/sentryd/sentryd.yaml
+    volumes:
+      - sentryd-docker-data:/data/sentryd-docker/.config/w3bv01d
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./sentryd/config/sentryd.mesh.yaml:/etc/sentryd/sentryd.yaml:ro
+    command: ["python3", "/app/scripts/mesh-discover.py", "--hub-peer-id", "augur-hub", "--hub-port", "8000", "sentryd", "daemon"]
+    restart: unless-stopped
+
+networks:
+  mesh:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.88.0.0/24
+
+volumes:
+  augur-pgdata:
+  augur-mesh-data:
+  sentryd-vps-data:
+  sentryd-vps-logs:
+  sentryd-docker-data:

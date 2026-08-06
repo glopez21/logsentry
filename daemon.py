@@ -22,6 +22,21 @@ logging.basicConfig(
 logger = logging.getLogger("logsentry.daemon")
 
 
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Recursively merge *override* into *base* in place.
+
+    - Dict values are merged recursively.
+    - Non-dict values in *override* replace those in *base*.
+    - Keys present only in *override* are added to *base*.
+    """
+    for key, value in override.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            _deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
 class LogSentryDaemon:
     """Main engine loop with asyncio orchestration and optional asyncpg."""
 
@@ -51,13 +66,14 @@ class LogSentryDaemon:
                 flush_interval=storage_cfg.get("flush_interval", 5),
             )
 
-        self._syslog_listener: Any = None
+        self._syslog_listeners: list[Any] = []
         self._http_server: Any = None
         self._file_watchers: list[Any] = []
 
         self._detection_interval = config["engine"].get("detection_interval", 30)
         self._stats_interval = config["engine"].get("stats_interval", 60)
         self._alert_rules: list[dict] = config["detection"].get("rules", []) or []
+        self._parser_overrides: list[dict] = config.get("ingest", {}).get("overrides", []) or []
 
         self._notifiers: list[Any] = []
         alert_cfg = config["detection"].get("alerts", {})
@@ -88,6 +104,21 @@ class LogSentryDaemon:
             except Exception as e:
                 logger.warning("Augur client init failed: %s", e)
 
+        # ThreatPulse client (optional)
+        self._tp_client: Any = None
+        tp_cfg = config.get("threatpulse", {})
+        if tp_cfg.get("enabled") and tp_cfg.get("api_url"):
+            try:
+                from integrations.threatpulse import ThreatPulseClient
+                self._tp_client = ThreatPulseClient(
+                    api_url=tp_cfg["api_url"],
+                    api_key=tp_cfg.get("api_key", ""),
+                    timeout=float(tp_cfg.get("timeout", 5.0)),
+                )
+                logger.info("ThreatPulse client initialized (%s)", tp_cfg["api_url"])
+            except Exception as e:
+                logger.warning("ThreatPulse client init failed: %s", e)
+
     # ── Lifecycle ─────────────────────────────────────────────────
 
     def start(self) -> None:
@@ -103,6 +134,10 @@ class LogSentryDaemon:
                 self._loop.add_signal_handler(sig, _make_handler(sig))
             except (ValueError, NotImplementedError):
                 signal.signal(sig, lambda s, f: self._signal_handler(s, f))
+        try:
+            self._loop.add_signal_handler(signal.SIGHUP, lambda: self._reload_config())
+        except (ValueError, NotImplementedError, AttributeError):
+            signal.signal(signal.SIGHUP, lambda s, f: self._reload_config())
 
         try:
             self._loop.run_until_complete(self._async_start())
@@ -200,10 +235,10 @@ class LogSentryDaemon:
             except Exception:
                 pass
 
-        # Stop syslog listener
-        if self._syslog_listener:
+        # Stop syslog listener(s)
+        for listener in (self._syslog_listeners or []):
             try:
-                self._syslog_listener.stop()
+                listener.stop()
             except Exception:
                 pass
 
@@ -217,6 +252,20 @@ class LogSentryDaemon:
             pass
 
         logger.info("Daemon stopped")
+
+    def _reload_config(self) -> None:
+        """SIGHUP handler — reload configuration without restart."""
+        import yaml
+        config_path = os.environ.get("LOGSENTRY_CONFIG", "logsentry.yaml")
+        try:
+            if os.path.exists(config_path):
+                with open(config_path) as f:
+                    new_config = yaml.safe_load(f) or {}
+                _deep_merge(self.config, new_config)
+                self._alert_rules = self.config.get("detection", {}).get("rules", []) or []
+                logger.info("Configuration reloaded from %s", config_path)
+        except Exception as e:
+            logger.warning("Config reload failed: %s", e)
 
     def _signal_handler(self, signum, frame) -> None:
         """Handle shutdown signals."""
@@ -238,26 +287,37 @@ class LogSentryDaemon:
             await self._start_file_watchers(file_cfg["paths"])
 
     async def _start_syslog(self, cfg: dict) -> None:
-        """Start syslog listener in executor thread."""
+        """Start syslog listener(s) in executor threads.
+
+        `protocol` may be "udp", "tcp", or "both" to listen on both transports
+        on the same port (e.g. so UDP and TCP rsyslog forwarders both work).
+        """
         from collector.syslog import SyslogListener
 
-        listener = SyslogListener(
-            port=cfg.get("port", 514),
-            protocol=cfg.get("protocol", "udp"),
-            parser=self._parse_line,
-            callback=self._syslog_callback,
-            bind_address=cfg.get("bind", "0.0.0.0"),
-        )
+        protocol = cfg.get("protocol", "udp")
+        protocols = ["udp", "tcp"] if protocol == "both" else [protocol]
 
         loop = asyncio.get_event_loop()
-        self._tasks.append(
-            asyncio.ensure_future(loop.run_in_executor(None, listener.start))
-        )
-        self._syslog_listener = listener
-        logger.info(
-            "Syslog listener started: %s:%s/%s",
-            cfg.get("bind", "0.0.0.0"), cfg.get("port", 514), cfg.get("protocol", "udp"),
-        )
+        self._syslog_listeners = []
+        for proto in protocols:
+            listener = SyslogListener(
+                port=cfg.get("port", 514),
+                protocol=proto,
+                parser=self._parse_line,
+                callback=self._syslog_callback,
+                bind_address=cfg.get("bind", "0.0.0.0"),
+                rate_limit=cfg.get("rate_limit", 100.0),
+                rate_burst=cfg.get("rate_burst", 200),
+                register_signals=False,
+            )
+            self._tasks.append(
+                asyncio.ensure_future(loop.run_in_executor(None, listener.start))
+            )
+            self._syslog_listeners.append(listener)
+            logger.info(
+                "Syslog listener started: %s:%s/%s",
+                cfg.get("bind", "0.0.0.0"), cfg.get("port", 514), proto,
+            )
 
     async def _start_file_watchers(self, paths: list[str]) -> None:
         """Watch directories for .log files via executor."""
@@ -281,6 +341,7 @@ class LogSentryDaemon:
                 filepath=fp,
                 parser=self._parse_line,
                 callback=self._file_watcher_callback,
+                register_signals=False,
             )
             self._tasks.append(
                 asyncio.ensure_future(loop.run_in_executor(None, collector.start, False))
@@ -303,9 +364,37 @@ class LogSentryDaemon:
         return None
 
     def _syslog_callback(self, message: str, record: Optional[dict], source: tuple) -> None:
-        self._store_record(record, message, source="syslog", host=source[0] if source else "")
+        # Apply parser override if configured
+        try:
+            source_ip = source[0] if source else ""
+        except Exception:
+            source_ip = ""
+        forced = self._choose_parser_override(message, source_ip)
+        if forced:
+            try:
+                from main import LOG_PARSERS
+                parser = LOG_PARSERS.get(forced)
+                if parser:
+                    rec2 = parser(message)
+                    if rec2:
+                        record = rec2
+            except Exception:
+                pass
+        self._store_record(record, message, source="syslog", host=source_ip)
 
     def _file_watcher_callback(self, line: str, record: Optional[dict]) -> None:
+        # For file watcher, only 'contains' overrides apply
+        forced = self._choose_parser_override(line, "")
+        if forced:
+            try:
+                from main import LOG_PARSERS
+                parser = LOG_PARSERS.get(forced)
+                if parser:
+                    rec2 = parser(line)
+                    if rec2:
+                        record = rec2
+            except Exception:
+                pass
         self._store_record(record, line, source="file")
 
     def _store_record(
@@ -324,6 +413,26 @@ class LogSentryDaemon:
                     self._sync_store_record(record, raw_message, source, host)
         except Exception as e:
             logger.warning("Failed to store log: %s", e)
+
+    def _choose_parser_override(self, message: str, source_ip: str) -> Optional[str]:
+        """Return a parser name if any override matches this message/source.
+
+        Supports two simple match modes for minimal risk:
+          - source_ip exact match: {"source_ip": "1.2.3.4", "parser": "web_access"}
+          - substring match in raw line: {"contains": "nginx:", "parser": "web_error"}
+        """
+        for rule in self._parser_overrides:
+            try:
+                parser = rule.get("parser")
+                if not parser:
+                    continue
+                if rule.get("source_ip") and source_ip and rule["source_ip"] == source_ip:
+                    return parser
+                if rule.get("contains") and rule["contains"] and rule["contains"] in message:
+                    return parser
+            except Exception:
+                continue
+        return None
 
     def _sync_store_record(self, record: dict, raw_message: str, source: str, host: str) -> None:
         self.store.insert_log(
@@ -483,6 +592,8 @@ class LogSentryDaemon:
 
     async def _evaluate_rule(self, rule: dict, records: list[dict]) -> None:
         """Evaluate a single custom alert rule against records."""
+        from datetime import datetime, timedelta
+
         name = rule.get("name", "unknown")
         condition = rule.get("condition", {})
         event_type = condition.get("event_type")
@@ -490,6 +601,24 @@ class LogSentryDaemon:
         source_ip = condition.get("source_ip")
         threshold = condition.get("threshold", 1)
         severity = rule.get("severity", "medium")
+
+        # Parse window (e.g. "5m", "1h", "30s") — defaults to None (no windowing)
+        window_str = condition.get("window")
+        window: timedelta | None = None
+        if window_str:
+            try:
+                value = int(window_str[:-1])
+                unit = window_str[-1].lower()
+                if unit == "s":
+                    window = timedelta(seconds=value)
+                elif unit == "m":
+                    window = timedelta(minutes=value)
+                elif unit == "h":
+                    window = timedelta(hours=value)
+                elif unit == "d":
+                    window = timedelta(days=value)
+            except (ValueError, IndexError):
+                pass
 
         matches = []
         for r in records:
@@ -500,6 +629,40 @@ class LogSentryDaemon:
             if source_ip and r.get("source_ip") != source_ip:
                 continue
             matches.append(r)
+
+        # Apply time window: only count matches within the most recent window
+        if window and matches:
+            def _parse_ts(ts_val: str) -> datetime | None:
+                if isinstance(ts_val, datetime):
+                    return ts_val
+                if not ts_val:
+                    return None
+                for fmt in (
+                    "%Y-%m-%dT%H:%M:%S",
+                    "%Y-%m-%dT%H:%M:%S.%f",
+                    "%Y-%m-%dT%H:%M:%SZ",
+                    "%Y-%m-%dT%H:%M:%S%z",
+                    "%Y-%m-%dT%H:%M:%S.%f%z",
+                    "%b %d %H:%M:%S",
+                    "%Y/%m/%d %H:%M:%S",
+                ):
+                    try:
+                        return datetime.strptime(ts_val, fmt)
+                    except ValueError:
+                        continue
+                return None
+
+            # Find the most recent timestamp among matches
+            timestamps = [_parse_ts(m.get("timestamp", "")) for m in matches]
+            valid_ts = [t for t in timestamps if t is not None]
+            if valid_ts:
+                latest = max(valid_ts)
+                cutoff = latest - window
+                windowed = []
+                for m, ts in zip(matches, timestamps):
+                    if ts is None or ts >= cutoff:
+                        windowed.append(m)
+                matches = windowed
 
         if len(matches) >= threshold:
             desc = rule.get("description", "")
@@ -535,7 +698,19 @@ class LogSentryDaemon:
         """Send alert to all configured notifiers."""
         alert_cfg = self.config["detection"].get("alerts", {})
 
-        if alert_cfg.get("stdout", True):
+        stdout_cfg = alert_cfg.get("stdout", {})
+        if isinstance(stdout_cfg, dict):
+            if stdout_cfg.get("enabled", True):
+                if stdout_cfg.get("format", "text") == "json":
+                    import json as _json
+                    logger.warning("ALERT %s", _json.dumps({
+                        "severity": severity, "rule": rule_name,
+                        "description": description, "source_ip": source_ip,
+                        "event_type": event_type, "timestamp": timestamp,
+                    }))
+                else:
+                    logger.warning("ALERT [%s] %s: %s", severity.upper(), rule_name, description)
+        elif stdout_cfg:
             logger.warning("ALERT [%s] %s: %s", severity.upper(), rule_name, description)
 
         webhook = alert_cfg.get("webhook", "")
@@ -581,6 +756,21 @@ class LogSentryDaemon:
             except Exception as e:
                 logger.debug("Augur push failed: %s", e)
 
+        # Forward to ThreatPulse if configured
+        if self._tp_client:
+            try:
+                self._tp_client.push_event(
+                    rule_name=rule_name,
+                    severity=severity,
+                    description=description,
+                    source_ip=source_ip,
+                    event_type=event_type,
+                    timestamp=timestamp,
+                    tags=["logsentry", rule_name, severity],
+                )
+            except Exception as e:
+                logger.debug("ThreatPulse push failed: %s", e)
+
         from n3xus import emit_alert
         instance = self.config.get("engine", {}).get("instance", "")
         emit_alert(
@@ -590,6 +780,7 @@ class LogSentryDaemon:
             description=description,
             source_ip=source_ip,
             event_type=event_type,
+            loop=self._loop,
         )
 
     # ── Stats ─────────────────────────────────────────────────────
@@ -611,6 +802,16 @@ class LogSentryDaemon:
                         stats.get("detections_24h", 0),
                         stats.get("by_severity", {}),
                     )
+                    # Push lightweight telemetry to ThreatPulse if configured
+                    if self._tp_client:
+                        try:
+                            self._tp_client.push_telemetry({
+                                "total_logs": stats.get("total_logs", 0),
+                                "total_detections": stats.get("total_detections", 0),
+                                "detections_24h": stats.get("detections_24h", 0),
+                            })
+                        except Exception:
+                            pass
                 await asyncio.sleep(self._stats_interval)
             except asyncio.CancelledError:
                 break

@@ -36,6 +36,8 @@ ingest:
     bind: 0.0.0.0
     port: 514
     protocol: udp
+    rate_limit: 100.0
+    rate_burst: 200
 
   # HTTP ingestion endpoint (runs inside the FastAPI server)
   http:
@@ -46,6 +48,13 @@ ingest:
     enabled: false
     paths:
       - /var/log
+
+  # Optional parser overrides to pin formats by source IP or substring.
+  # Examples:
+  # overrides:
+  #   - { source_ip: "10.0.0.10", parser: "web_access" }
+  #   - { contains: "nginx:", parser: "web_error" }
+  overrides: []
 
 detection:
   # Run detection rules on ingested logs
@@ -69,7 +78,9 @@ detection:
 
   # Alert routing
   alerts:
-    stdout: true
+    stdout:
+      enabled: true
+      format: json
     webhook: ""
     discord:
       webhook_url: ""
@@ -83,6 +94,8 @@ server:
   # FastAPI server for query & ingest
   host: 0.0.0.0
   port: 8080
+  # Optional: protect /ingest and /api routes with an API key
+  api_key: ""
 
 # Cross-project database schemas managed by LogSentry
 schemas:
@@ -101,3 +114,13 @@ augur:
   agent_type: "logsentry"
   api_key: ""
   heartbeat_interval: 30
+
+# ThreatPulse integration
+# When enabled, detection events and periodic telemetry are pushed to the
+# ThreatPulse system via HTTP. You can also enable this by setting
+# THREATPULSE_URL and THREATPULSE_API_KEY environment variables.
+threatpulse:
+  enabled: false
+  api_url: "http://threatpulse:8080"
+  api_key: ""
+  timeout: 5.0

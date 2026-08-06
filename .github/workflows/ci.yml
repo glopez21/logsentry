@@ -13,6 +13,21 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12"]
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: logsentry
+          POSTGRES_PASSWORD: logsentry
+          POSTGRES_DB: logsentry
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -33,6 +48,8 @@ jobs:
         run: uv run mypy .
 
       - name: Run tests
+        env:
+          LOGSENTRY_TEST_DSN: postgresql://logsentry:logsentry@localhost:5432/logsentry
         run: uv run pytest --cov=logsentry --cov-report=xml --cov-report=html
 
       - name: Upload coverage

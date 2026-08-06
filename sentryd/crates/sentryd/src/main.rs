@@ -18,13 +18,14 @@
 //   3. Build the Augur HTTP client
 //   4. Register with the hub (get agent_id)
 //   5. Start heartbeat loop (spawned as a tokio task)
-//   6. Start file watchers (spawned as a tokio task)
-//   7. Enter main loop:
+//   6. Start task polling loop (spawned as a tokio task)
+//   7. Start file watchers (spawned as a tokio task)
+//   8. Enter main loop:
 //        - Receive LogEntry from file watcher channel
 //        - Push to local SQLite store
 //        - Run detection engine
 //        - If alert generated, store as event too
-//   8. On SIGINT/SIGTERM (ctrl-c): signal shutdown, join tasks
+//   9. On SIGINT/SIGTERM (ctrl-c): signal shutdown, join tasks
 //
 // tokio::spawn creates concurrent tasks on the same thread pool.
 // The watch channel (tokio::sync::watch) provides one-shot
@@ -40,7 +41,8 @@ use std::sync::{Arc, RwLock};
 
 use clap::{Parser, Subcommand};
 use sentry_agent::AugurClient;
-use sentry_core::{AgentConfig, LogEntry, RemoteTask};
+use sentry_core::{AgentConfig, ContainerInfo, LogEntry, RemoteTask};
+use sentry_containers;
 use sentry_detect::DetectionEngine;
 use sentry_exec::execute_task;
 use sentry_ingest::FileTail;
@@ -259,6 +261,7 @@ async fn cmd_status(config: Arc<RwLock<AgentConfig>>) -> anyhow::Result<()> {
     println!("pending:    {} events", pending);
     println!("watchers:   {} paths", cfg.ingest.file_watchers.paths.len());
     println!("detection:  {}", if cfg.detection.enabled { "enabled" } else { "disabled" });
+    println!("discovery:  {} runtimes: {:?}", if cfg.discovery.enabled { "enabled" } else { "disabled" }, cfg.discovery.runtimes);
     println!("config:     /etc/sentryd/sentryd.yaml (SIGHUP to reload)");
     Ok(())
 }
@@ -340,6 +343,66 @@ async fn run_daemon(config: Arc<RwLock<AgentConfig>>, config_path: PathBuf) -> a
         }
     });
 
+    // ── WebSocket control channel (if enabled) ────────────────
+    let ws_enabled = config.read().map(|c| c.hub.ws_enabled).unwrap_or(false);
+    let ws_handle: Option<tokio::task::JoinHandle<()>> = if ws_enabled {
+        let ws_client = client.clone();
+        let ws_shutdown = shutdown_rx.clone();
+        tracing::info!("WebSocket control channel enabled");
+        Some(tokio::spawn(async move {
+            ws_client.start_control_channel(ws_shutdown).await;
+        }))
+    } else {
+        tracing::info!("WebSocket control channel disabled, using polling");
+        None
+    };
+
+    // ── Task polling loop ──────────────────────────────────────
+    let task_client = client.clone();
+    let mut task_shutdown = shutdown_rx.clone();
+    let task_handle = tokio::spawn(async move {
+        loop {
+            tokio::select! {
+                _ = tokio::time::sleep(std::time::Duration::from_secs(30)) => {}
+                _ = task_shutdown.changed() => break,
+            }
+            if *task_shutdown.borrow() { break; }
+
+            let envelopes = match task_client.poll_tasks(Some("pending")).await {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::debug!("task poll failed (non-fatal): {}", e);
+                    continue;
+                }
+            };
+
+            for envelope in &envelopes {
+                let task_id = &envelope.id;
+
+                if let Err(e) = task_client.ack_task(task_id).await {
+                    tracing::warn!("task {} ack failed: {}", task_id, e);
+                    continue;
+                }
+                tracing::info!("acknowledged task {}", task_id);
+
+                let remote_task = match envelope.to_remote_task() {
+                    Ok(t) => t,
+                    Err(e) => {
+                        tracing::warn!("task {} parse failed: {}", task_id, e);
+                        continue;
+                    }
+                };
+
+                let result = execute_task(remote_task).await;
+                tracing::info!("task {} completed: {:?}", task_id, result.status);
+
+                if let Err(e) = task_client.submit_task_result(task_id, &result).await {
+                    tracing::warn!("task {} result submission failed: {}", task_id, e);
+                }
+            }
+        }
+    });
+
     // ── Remote config pull loop ───────────────────────────────
     let remote_client = client.clone();
     let remote_cfg = config.clone();
@@ -374,6 +437,7 @@ async fn run_daemon(config: Arc<RwLock<AgentConfig>>, config_path: PathBuf) -> a
 
     // ── File watcher (spawned task) ───────────────────────────
     let (ingest_tx, mut ingest_rx) = tokio::sync::mpsc::unbounded_channel();
+    let disc_tx = ingest_tx.clone();
     let ingest_shutdown = shutdown_rx.clone();
     let ingest_config = config.clone();
     let ingest_handle = tokio::spawn(async move {
@@ -384,6 +448,52 @@ async fn run_daemon(config: Arc<RwLock<AgentConfig>>, config_path: PathBuf) -> a
         if let Err(e) = sentry_ingest::watch_files(patterns, ingest_tx, ingest_shutdown).await {
             tracing::error!("file watcher error: {}", e);
         }
+    });
+
+    // ── Container discovery (spawned task) ─────────────────────
+    let disc_config = config.clone();
+    let disc_shutdown = shutdown_rx.clone();
+    let disc_handle = tokio::spawn(async move {
+        let (runtimes, interval) = {
+            let cfg = &*disc_config.read().unwrap();
+            (cfg.discovery.runtimes.clone(), cfg.discovery.interval)
+        };
+
+        if runtimes.is_empty() {
+            tracing::info!("container discovery: no runtimes configured, skipping");
+            return;
+        }
+
+        let callback = move |containers: Vec<ContainerInfo>| {
+            for c in &containers {
+                let raw = match serde_json::to_string(c) {
+                    Ok(r) => r,
+                    Err(_) => continue,
+                };
+                let entry = LogEntry {
+                    timestamp: chrono::Utc::now(),
+                    host: std::env::var("HOSTNAME").unwrap_or_else(|_| "unknown".to_string()),
+                    source: "container".to_string(),
+                    format: "container_discovery".to_string(),
+                    raw,
+                    source_ip: None,
+                    user: None,
+                    event_type: Some("container".to_string()),
+                    mitre_tactic: None,
+                    mitre_technique: None,
+                    severity: sentry_core::Severity::Info,
+                    tags: vec![
+                        "container".to_string(),
+                        c.runtime.clone(),
+                        c.status.clone(),
+                    ],
+                };
+                let _ = disc_tx.send(entry);
+            }
+            tracing::info!("container discovery: {} containers reported", containers.len());
+        };
+
+        sentry_containers::discovery_loop(runtimes, interval, disc_shutdown, callback).await;
     });
 
     // ── Detection engine ──────────────────────────────────────
@@ -448,7 +558,11 @@ async fn run_daemon(config: Arc<RwLock<AgentConfig>>, config_path: PathBuf) -> a
     tracing::info!("shutting down...");
 
     let _ = shutdown_tx.send(true);
-    let _ = tokio::join!(sighup_handle, remote_handle, hb_handle, ingest_handle, main_handle);
+    let _ = tokio::join!(
+        sighup_handle, remote_handle, hb_handle, task_handle,
+        ingest_handle, disc_handle, main_handle,
+        async { if let Some(h) = ws_handle { h.await.unwrap_or(()) } },
+    );
     let _ = std::fs::remove_file("/var/run/sentryd.pid");
 
     tracing::info!("sentryd stopped");
@@ -475,6 +589,7 @@ fn make_client(config: &AgentConfig, store: Option<Arc<LocalStore>>) -> AugurCli
         &config.agent.name,
         &config.agent.agent_type,
         config.hub.heartbeat_interval,
+        config.hub.ws_url.clone(),
         store,
     )
 }
