@@ -151,7 +151,7 @@ wheels = [
 [[package]]
 name = "augur-client"
 version = "0.1.0"
-source = { git = "https://github.com/glopez21/augur-client.git#99676bda05e2e8570367ed66883d2b312de024bd" }
+source = { git = "https://github.com/glopez21/augur-client.git?rev=21353c4e471a68b3d936a64cfb21643437d7fb6e#21353c4e471a68b3d936a64cfb21643437d7fb6e" }
 dependencies = [
     { name = "httpx" },
 ]
@@ -583,7 +583,7 @@ web = [
 requires-dist = [
     { name = "aiofiles", marker = "extra == 'web'", specifier = ">=24.1" },
     { name = "asyncpg", marker = "extra == 'async'", specifier = ">=0.29" },
-    { name = "augur-client", marker = "extra == 'augur'", git = "https://github.com/glopez21/augur-client.git" },
+    { name = "augur-client", marker = "extra == 'augur'", git = "https://github.com/glopez21/augur-client.git?rev=21353c4e471a68b3d936a64cfb21643437d7fb6e" },
     { name = "fastapi", marker = "extra == 'server'", specifier = ">=0.100" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "jinja2", marker = "extra == 'server'", specifier = ">=3.1" },
