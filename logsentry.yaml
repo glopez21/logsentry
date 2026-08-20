@@ -81,7 +81,7 @@ detection:
     stdout:
       enabled: true
       format: json
-    webhook: ""
+    webhook: "${ALERTFLOW_URL}/api/alerts"
     discord:
       webhook_url: ""
     slack:
@@ -108,7 +108,7 @@ schemas:
 # When enabled, detection alerts are pushed to the Augur hub as events
 # Install: pip install 'logsentry[augur]'
 augur:
-  enabled: false
+  enabled: true
   hub_url: "http://augur:8001"
   agent_name: "logsentry"
   agent_type: "logsentry"

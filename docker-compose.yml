@@ -27,11 +27,16 @@ services:
       ABUSEIPDB_API_KEY: ${ABUSEIPDB_API_KEY:-}
       OTX_API_KEY: ${OTX_API_KEY:-}
       SHODAN_API_KEY: ${SHODAN_API_KEY:-}
-      AUGUR_URL: ${AUGUR_URL:-}
+      AUGUR_URL: ${AUGUR_URL:-http://augur:8001}
       AUGUR_API_KEY: ${AUGUR_API_KEY:-}
       AUGUR_AGENT_NAME: ${AUGUR_AGENT_NAME:-logsentry}
       THREATPULSE_URL: ${THREATPULSE_URL:-}
       THREATPULSE_API_KEY: ${THREATPULSE_API_KEY:-}
+      SPLUNK_ENDPOINT: ${SPLUNK_ENDPOINT:-}
+      SPLUNK_HEC_TOKEN: ${SPLUNK_HEC_TOKEN:-}
+      ALERTFLOW_URL: ${ALERTFLOW_URL:-http://alertflow:8000}
+      ALERTFLOW_API_KEY: ${ALERTFLOW_API_KEY:-}
+      KAFKA_BROKER: ${KAFKA_BROKER:-kafka:9092}
     ports:
       - "514:514/udp"
       - "514:514/tcp"
@@ -40,6 +45,34 @@ services:
       - logs:/var/log
       - ./logsentry.yaml:/etc/logsentry/logsentry.yaml:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - default
+      - proxy-net
+      - alertflow-net
+    labels:
+      - "4rch3.io.enable=true"
+      - "4rch3.io.service=logsentry"
+      - "4rch3.io.name=LogSentry"
+      - "4rch3.io.description=Security log parsing, detection, and SIEM export"
+      - "4rch3.io.url=https://logsentry.4rch3.io"
+      - "4rch3.io.health=/health"
+      - "4rch3.io.port=8080"
+      - "4rch3.io.public=true"
+      - "4rch3.io.category=security"
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-net"
+      - "traefik.http.routers.logsentry.rule=Host(`logsentry.4rch3.io`)"
+      - "traefik.http.routers.logsentry.entrypoints=websecure"
+      - "traefik.http.routers.logsentry.tls=true"
+      - "traefik.http.routers.logsentry.tls.certresolver=cloudflare"
+      - "traefik.http.routers.logsentry.middlewares=security-headers@file,cf-access-auth@file"
+      - "traefik.http.services.logsentry.loadbalancer.server.port=8080"
 
   # Init: run --init-db once, then exit
   db-init:
@@ -55,3 +88,11 @@ services:
 volumes:
   pgdata:
   logs:
+
+networks:
+  proxy-net:
+    external: true
+    name: proxy-net
+  alertflow-net:
+    external: true
+    name: alertflow-net
