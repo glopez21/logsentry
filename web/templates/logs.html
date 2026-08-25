@@ -2,37 +2,66 @@
 {% block title %} — Logs{% endblock %}
 {% block content %}
 <div class="card">
-    <h2>Log Browser</h2>
+    <h2>Log Browser <span class="muted" style="text-transform:none; letter-spacing:0;">({{ total }} matching)</span></h2>
     <form class="filters" method="get" action="/web/logs">
-        <input type="text" name="search" placeholder="Search messages..." value="{{ search or '' }}">
+        <input type="text" name="search" placeholder="Search messages..." value="{{ search or '' }}" size="28">
         <select name="severity">
             <option value="">All Severities</option>
             {% for s in ['critical', 'high', 'medium', 'low', 'info'] %}
             <option value="{{ s }}" {% if severity == s %}selected{% endif %}>{{ s }}</option>
             {% endfor %}
         </select>
-        <input type="text" name="source_ip" placeholder="Source IP" value="{{ source_ip or '' }}">
+        <select name="host">
+            <option value="">All Hosts</option>
+            {% for h in hosts_list %}
+            <option value="{{ h }}" {% if host == h %}selected{% endif %}>{{ h }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="source_ip" placeholder="Source IP" value="{{ source_ip or '' }}" size="15">
         <button type="submit">Search</button>
+        {% if search or severity or source_ip or host %}
+        <a href="/web/logs" style="color:#94a3b8; font-size:0.85rem;">Clear</a>
+        {% endif %}
     </form>
     <table>
         <thead>
-            <tr><th>Time</th><th>Severity</th><th>Source IP</th><th>User</th><th>Event Type</th><th>Message</th></tr>
+            <tr><th>Time</th><th>Severity</th><th>Host</th><th>Source IP</th><th>User</th><th>Event Type</th><th>Message</th></tr>
         </thead>
         <tbody>
             {% for log in logs %}
             <tr>
-                <td>{{ log.timestamp[:19] if log.timestamp else '' }}</td>
+                <td class="muted">{{ log.timestamp[:19] if log.timestamp else '' }}</td>
                 <td><span class="badge badge-{{ log.severity }}">{{ log.severity }}</span></td>
-                <td>{{ log.source_ip or '-' }}</td>
+                <td>{{ log.host or '-' }}</td>
+                <td class="mono">{{ log.source_ip or '-' }}</td>
                 <td>{{ log.user_name or '-' }}</td>
                 <td>{{ log.event_type or '-' }}</td>
-                <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    {{ log.message[:100] if log.message else '' }}
+                <td style="max-width: 380px;">
+                    <details class="raw">
+                        <summary class="msg-summary">{{ log.message[:90] if log.message else '' }}{% if log.message and log.message|length > 90 %} &hellip;{% endif %}</summary>
+                        <div style="margin-top: 0.4rem;">
+                            <div class="mono muted">format: {{ log.format or '-' }} &nbsp; mitre: {{ log.mitre_id or '-' }}</div>
+                            <div class="mono">{{ log.message }}</div>
+                        </div>
+                    </details>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     {% if not logs %}<p>No logs found.</p>{% endif %}
+
+    {% if pages > 1 %}
+    <div class="pagination">
+        {% set qbase = '/web/logs?' %}
+        {% if search %}{% set qbase = qbase ~ 'search=' ~ search ~ '&' %}{% endif %}
+        {% if severity %}{% set qbase = qbase ~ 'severity=' ~ severity ~ '&' %}{% endif %}
+        {% if source_ip %}{% set qbase = qbase ~ 'source_ip=' ~ source_ip ~ '&' %}{% endif %}
+        {% if host %}{% set qbase = qbase ~ 'host=' ~ host ~ '&' %}{% endif %}
+        {% if page > 1 %}<a href="{{ qbase }}page={{ page - 1 }}">&larr; Prev</a>{% endif %}
+        <span>Page {{ page }} of {{ pages }}</span>
+        {% if page < pages %}<a href="{{ qbase }}page={{ page + 1 }}">Next &rarr;</a>{% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

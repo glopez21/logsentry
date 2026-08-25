@@ -8,7 +8,7 @@ import argparse
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, date, timezone
 from typing import Any, Optional
 
 try:
@@ -1771,26 +1771,62 @@ sudo /tmp/logsentry-install.{ 'sh' if mode=='systemd' else 'docker.sh' } {flags_
 
         templates_dir = Path(__file__).resolve().parent / "web" / "templates"
         if templates_dir.exists():
+            from fastapi.responses import RedirectResponse
+            import psycopg2.extras
+
+            def _stringify_rows(rows: list[dict]) -> list[dict]:
+                """Convert datetime/date values to strings for template slicing."""
+                out = []
+                for row in rows:
+                    clean = {}
+                    for k, v in row.items():
+                        if isinstance(v, (datetime, date)):
+                            clean[k] = v.strftime("%Y-%m-%d %H:%M:%S")
+                        else:
+                            clean[k] = v
+                    out.append(clean)
+                return out
+
             templates = Jinja2Templates(directory=str(templates_dir))
+
+            @app.get("/", response_class=HTMLResponse)
+            async def web_root():
+                return RedirectResponse(url="/web/")
 
             @app.get("/web/", response_class=HTMLResponse)
             async def web_dashboard(request: Request):
                 stats = store.get_stats() if store else {"total_logs": 0, "total_detections": 0, "detections_24h": 0, "by_severity": {}}
-                recent_logs = store.query(limit=20) if store else []
+                recent_logs = _stringify_rows(store.query(limit=15)) if store else []
                 recent_dets = []
+                top_ips: list[dict] = []
+                top_rules_list: list[dict] = []
+                hosts: list[dict] = []
                 if store:
                     try:
                         conn = store.get_conn()
-                        with conn.cursor() as cur:
-                            cur.execute("SELECT * FROM logsentry.detections ORDER BY created_at DESC LIMIT 10")
-                            cols = [desc[0] for desc in cur.description]
-                            recent_dets = [dict(zip(cols, row)) for row in cur.fetchall()]
+                        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                            cur.execute(
+                                """
+                                SELECT id, created_at, rule_name, severity,
+                                       mitre_id, mitre_tactic, description
+                                FROM logsentry.detections
+                                ORDER BY created_at DESC LIMIT 12
+                                """
+                            )
+                            recent_dets = _stringify_rows([dict(r) for r in cur.fetchall()])
                         store.put_conn(conn)
                     except Exception:
                         pass
-                return templates.TemplateResponse("dashboard.html", {
+                    top_ips = _stringify_rows(store.top_source_ips(limit=8))
+                    top_rules_list = _stringify_rows(store.top_rules(limit=8))
+                    hosts = _stringify_rows(store.host_activity(limit=10))
+
+                max_sev = max(stats.get("by_severity", {}).values(), default=1) or 1
+                return templates.TemplateResponse(request, "dashboard.html", {
                     "request": request, "stats": stats,
                     "recent_logs": recent_logs, "recent_detections": recent_dets,
+                    "top_ips": top_ips, "top_rules": top_rules_list,
+                    "hosts": hosts, "max_sev": max_sev,
                 })
 
             @app.get("/web/logs", response_class=HTMLResponse)
@@ -1799,18 +1835,71 @@ sudo /tmp/logsentry-install.{ 'sh' if mode=='systemd' else 'docker.sh' } {flags_
                 search: str = "",
                 severity: str = "",
                 source_ip: str = "",
+                host: str = "",
+                page: int = 1,
             ):
-                kwargs: dict[str, Any] = {"limit": 100}
+                page = max(page, 1)
+                per_page = 50
+                kwargs: dict[str, Any] = {
+                    "limit": per_page,
+                    "offset": (page - 1) * per_page,
+                }
                 if search:
                     kwargs["search"] = search
                 if severity:
                     kwargs["severity"] = severity
                 if source_ip:
                     kwargs["source_ip"] = source_ip
+                if host:
+                    kwargs["host"] = host
                 logs = store.query(**kwargs) if store else []
-                return templates.TemplateResponse("logs.html", {
+                logs = _stringify_rows(logs)
+                total = store.count_logs(**kwargs) if store else 0
+                pages = max((total + per_page - 1) // per_page, 1)
+                hosts_list = store.distinct_hosts() if store else []
+                return templates.TemplateResponse(request, "logs.html", {
                     "request": request, "logs": logs,
-                    "search": search, "severity": severity, "source_ip": source_ip,
+                    "search": search, "severity": severity,
+                    "source_ip": source_ip, "host": host,
+                    "hosts_list": hosts_list,
+                    "page": page, "pages": pages, "total": total,
+                })
+
+            @app.get("/web/detections", response_class=HTMLResponse)
+            async def web_detections(
+                request: Request,
+                search: str = "",
+                severity: str = "",
+                rule: str = "",
+                page: int = 1,
+            ):
+                page = max(page, 1)
+                per_page = 50
+                dets, total = ([], 0)
+                if store:
+                    dets, total = store.query_detections(
+                        severity=severity or None,
+                        rule_name=rule or None,
+                        search=search or None,
+                        limit=per_page,
+                        offset=(page - 1) * per_page,
+                    )
+                    dets = _stringify_rows(dets)
+                pages = max((total + per_page - 1) // per_page, 1)
+                rules_list = []
+                if store:
+                    rules_list = [r["rule_name"] for r in store.top_rules(limit=50, hours=24 * 90)]
+                return templates.TemplateResponse(request, "detections.html", {
+                    "request": request, "detections": dets,
+                    "search": search, "severity": severity, "rule": rule,
+                    "rules_list": rules_list,
+                    "page": page, "pages": pages, "total": total,
+                })
+
+            @app.get("/web/tail", response_class=HTMLResponse)
+            async def web_tail(request: Request):
+                return templates.TemplateResponse(request, "tail.html", {
+                    "request": request,
                 })
     except ImportError:
         pass

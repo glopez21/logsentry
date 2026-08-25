@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %} — Live Tail{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Live Tail</h2>
+    <div class="filters">
+        <select id="tail-severity" onchange="reconnect()">
+            <option value="">All Severities</option>
+            {% for s in ['critical', 'high', 'medium', 'low', 'info'] %}
+            <option value="{{ s }}">{{ s }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" id="tail-search" placeholder="Filter text..." size="24">
+        <button type="button" onclick="applySearch()">Apply</button>
+        <button type="button" class="secondary" id="pause-btn" onclick="togglePause()">Pause</button>
+        <button type="button" class="secondary" onclick="clearTail()">Clear</button>
+        <span id="conn-status" class="muted">connecting&hellip;</span>
+    </div>
+    <div id="tail-box"></div>
+</div>
+
+<script>
+(function () {
+    var ws = null;
+    var paused = false;
+    var pending = [];
+    var box = document.getElementById('tail-box');
+    var statusEl = document.getElementById('conn-status');
+    var maxLines = 1000;
+
+    function connect() {
+        if (ws) { ws.close(); }
+        var proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+        var url = proto + location.host + '/api/v1/tail/ws';
+        var sev = document.getElementById('tail-severity').value;
+        var search = document.getElementById('tail-search').value.trim();
+        if (sev) url += '?severity=' + encodeURIComponent(sev);
+        if (search) url += (sev ? '&' : '?') + 'search=' + encodeURIComponent(search);
+        statusEl.textContent = 'connecting\u2026';
+        try {
+            ws = new WebSocket(url);
+        } catch (e) {
+            statusEl.textContent = 'error: ' + e.message;
+            return;
+        }
+        ws.onopen = function () {
+            statusEl.innerHTML = '<span style="color:#22c55e;">\u25cf live</span>';
+        };
+        ws.onmessage = function (ev) {
+            if (paused) { pending.push(ev.data); return; }
+            appendLine(JSON.parse(ev.data));
+        };
+        ws.onclose = function () {
+            statusEl.textContent = 'disconnected \u2014 retrying in 3s';
+            setTimeout(connect, 3000);
+        };
+        ws.onerror = function () { ws.close(); };
+    }
+
+    function esc(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function appendLine(row) {
+        var div = document.createElement('div');
+        div.className = 'line';
+        var ts = (row.timestamp || '').slice(0, 19);
+        var sev = row.severity || 'info';
+        var host = row.host || '-';
+        var ip = row.source_ip || '';
+        var msg = row.message || '';
+        div.innerHTML =
+            '<span class="muted">' + esc(ts) + '</span> ' +
+            '<span class="sev-' + esc(sev) + '">[' + esc(sev) + ']</span> ' +
+            '<span>' + esc(host) + '</span> ' +
+            (ip ? '<span class="mono">' + esc(ip) + '</span> ' : '') +
+            '<span>' + esc(msg) + '</span>';
+        box.appendChild(div);
+        while (box.children.length > maxLines) { box.removeChild(box.firstChild); }
+        box.scrollTop = box.scrollHeight;
+    }
+
+    window.togglePause = function () {
+        paused = !paused;
+        document.getElementById('pause-btn').textContent = paused ? 'Resume' : 'Pause';
+        if (!paused && pending.length) {
+            pending.forEach(function (raw) {
+                try { appendLine(JSON.parse(raw)); } catch (e) {}
+            });
+            pending = [];
+        }
+    };
+
+    window.clearTail = function () { box.innerHTML = ''; pending = []; };
+    window.reconnect = connect;
+    window.applySearch = connect;
+
+    connect();
+})();
+</script>
+{% endblock %}

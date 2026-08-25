@@ -717,9 +717,15 @@ class LogSentryDaemon:
         if webhook:
             try:
                 import httpx
+                priority_map = {
+                    "critical": "P1", "high": "P2",
+                    "medium": "P3", "low": "P4", "info": "P4",
+                }
                 httpx.post(webhook, json={
-                    "rule": rule_name, "severity": severity,
-                    "description": description, "source_ip": source_ip,
+                    "title": f"LogSentry: {rule_name}",
+                    "severity": priority_map.get(severity.lower(), "P3"),
+                    "source": "logsentry",
+                    "ioc": source_ip,
                 }, timeout=5)
             except Exception:
                 pass

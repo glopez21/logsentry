@@ -37,6 +37,12 @@ services:
       ALERTFLOW_URL: ${ALERTFLOW_URL:-http://alertflow:8000}
       ALERTFLOW_API_KEY: ${ALERTFLOW_API_KEY:-}
       KAFKA_BROKER: ${KAFKA_BROKER:-kafka:9092}
+      THEHIVE_URL: ${THEHIVE_URL:-http://thehive:9000}
+      THEHIVE_API_KEY: ${THEHIVE_API_KEY:-}
+      THEHIVE_CASE_TEMPLATE: ${THEHIVE_CASE_TEMPLATE:-Default}
+      MISP_URL: ${MISP_URL:-https://misp:443}
+      MISP_API_KEY: ${MISP_API_KEY:-}
+      MISP_SSL_VERIFY: ${MISP_SSL_VERIFY:-false}
     ports:
       - "514:514/udp"
       - "514:514/tcp"
