@@ -202,10 +202,55 @@ class LogSentryDaemon:
         if self.config["detection"].get("enabled", True):
             self._tasks.append(asyncio.create_task(self._detection_loop()))
 
+        # 8. Start health server
+        await self._start_health_server()
+
         logger.info("Daemon started — ingesting, storing, detecting")
 
-        # 8. Keep running
+        # 9. Keep running
         await self._wait_for_shutdown()
+
+    async def _start_health_server(self) -> None:
+        """Start a lightweight HTTP server for the /health endpoint."""
+        import functools
+        import threading
+        from http.server import HTTPServer, BaseHTTPRequestHandler
+
+        server_cfg = self.config.get("server", {})
+        host = server_cfg.get("host", "0.0.0.0")
+        port = server_cfg.get("port", 8080)
+
+        class HealthHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path == "/health":
+                    import json as _json
+                    body = _json.dumps({
+                        "status": "healthy",
+                        "service": "logsentry",
+                        "version": "0.2.0",
+                        "database": "connected",
+                    })
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(body.encode())
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+
+            def log_message(self, format, *args):
+                pass
+
+        handler = functools.partial(HealthHandler)
+
+        try:
+            server = HTTPServer((host, port), handler)
+            self._http_server = server
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            logger.info("Health server started on %s:%s", host, port)
+        except OSError as e:
+            logger.warning("Health server failed to bind %s:%s: %s", host, port, e)
 
     async def _wait_for_shutdown(self) -> None:
         """Wait until stop is requested."""
