@@ -43,20 +43,21 @@ services:
       MISP_URL: ${MISP_URL:-https://misp:443}
       MISP_API_KEY: ${MISP_API_KEY:-}
       MISP_SSL_VERIFY: ${MISP_SSL_VERIFY:-false}
-    ports:
-      - "514:514/udp"
-      - "514:514/tcp"
-      - "8080:8080"
+    # no host port mapping - syslog received over Docker network
+    # ports:
+    #   - "1514:514/udp"
+    #   - "1514:514/tcp"
+    #   - "8080:8080"
     volumes:
       - logs:/var/log
       - ./logsentry.yaml:/etc/logsentry/logsentry.yaml:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD-SHELL", "python3 -c \"import os,signal; os.kill(1,0)\""]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 15s
     networks:
       - default
       - proxy-net
@@ -67,7 +68,6 @@ services:
       - "4rch3.io.name=LogSentry"
       - "4rch3.io.description=Security log parsing, detection, and SIEM export"
       - "4rch3.io.url=https://logsentry.4rch3.io"
-      - "4rch3.io.health=/health"
       - "4rch3.io.port=8080"
       - "4rch3.io.public=true"
       - "4rch3.io.category=security"
