@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %} — Detections{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Detections <span class="muted" style="text-transform:none; letter-spacing:0;">({{ total }} matching)</span></h2>
+    <form class="filters" method="get" action="/web/detections">
+        <input type="text" name="search" placeholder="Search descriptions..." value="{{ search or '' }}" size="28">
+        <select name="severity">
+            <option value="">All Severities</option>
+            {% for s in ['critical', 'high', 'medium', 'low', 'info'] %}
+            <option value="{{ s }}" {% if severity == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+        <select name="rule">
+            <option value="">All Rules</option>
+            {% for r in rules_list %}
+            <option value="{{ r }}" {% if rule == r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+        {% if search or severity or rule %}
+        <a href="/web/detections" style="color:#94a3b8; font-size:0.85rem;">Clear</a>
+        {% endif %}
+    </form>
+    <table>
+        <thead>
+            <tr><th>Time</th><th>Severity</th><th>Rule</th><th>MITRE</th><th>Tactic</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+            {% for d in detections %}
+            <tr>
+                <td class="muted">{{ d.created_at[:19] if d.created_at else '' }}</td>
+                <td><span class="badge badge-{{ d.severity }}">{{ d.severity }}</span></td>
+                <td><a href="/web/detections?rule={{ d.rule_name }}" style="color:#38bdf8; text-decoration:none;">{{ d.rule_name }}</a></td>
+                <td>{% if d.mitre_id %}<span class="badge badge-mitre">{{ d.mitre_id }}</span>{% else %}<span class="muted">-</span>{% endif %}</td>
+                <td class="muted">{{ d.mitre_tactic or '-' }}</td>
+                <td style="max-width: 420px;">
+                    <details class="raw">
+                        <summary>{{ d.description[:100] if d.description else '' }}{% if d.description and d.description|length > 100 %} &hellip;{% endif %}</summary>
+                        <div class="mono" style="margin-top: 0.4rem;">{{ d.description }}</div>
+                        {% if d.raw_data %}
+                        <pre class="mono muted" style="margin-top: 0.4rem; white-space: pre-wrap;">{{ d.raw_data }}</pre>
+                        {% endif %}
+                    </details>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if not detections %}<p>No detections found.</p>{% endif %}
+
+    {% if pages > 1 %}
+    <div class="pagination">
+        {% set qbase = '/web/detections?' %}
+        {% if search %}{% set qbase = qbase ~ 'search=' ~ search ~ '&' %}{% endif %}
+        {% if severity %}{% set qbase = qbase ~ 'severity=' ~ severity ~ '&' %}{% endif %}
+        {% if rule %}{% set qbase = qbase ~ 'rule=' ~ rule ~ '&' %}{% endif %}
+        {% if page > 1 %}<a href="{{ qbase }}page={{ page - 1 }}">&larr; Prev</a>{% endif %}
+        <span>Page {{ page }} of {{ pages }}</span>
+        {% if page < pages %}<a href="{{ qbase }}page={{ page + 1 }}">Next &rarr;</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

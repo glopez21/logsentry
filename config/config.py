@@ -113,6 +113,10 @@ def load_config(path: str | None = None) -> dict[str, Any]:
     if os.environ.get("AUGUR_URL"):
         config["augur"]["enabled"] = True
         config["augur"]["hub_url"] = os.environ["AUGUR_URL"]
+    if os.environ.get("ALERTFLOW_URL"):
+        config["detection"]["alerts"]["webhook"] = (
+            os.environ["ALERTFLOW_URL"].rstrip("/") + "/api/alerts"
+        )
     if os.environ.get("THREATPULSE_URL"):
         config["threatpulse"]["enabled"] = True
         config["threatpulse"]["api_url"] = os.environ["THREATPULSE_URL"]

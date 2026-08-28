@@ -396,6 +396,7 @@ class LogStore:
         source_ip: str | None = None,
         event_type: str | None = None,
         search: str | None = None,
+        host: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict]:
@@ -418,6 +419,9 @@ class LogStore:
         if event_type:
             conditions.append("event_type = %s")
             params.append(event_type)
+        if host:
+            conditions.append("host = %s")
+            params.append(host)
         if labels:
             conditions.append("labels @> %s")
             params.append(json.dumps(labels))
@@ -574,6 +578,179 @@ class LogStore:
             }
         except Exception:
             return {"error": "unable to get stats"}
+        finally:
+            self.put_conn(conn)
+
+    def count_logs(self, **filters: Any) -> int:
+        """Count logs matching the same filters as query()."""
+        conditions: list[str] = []
+        params: list[Any] = []
+        if filters.get("severity"):
+            conditions.append("severity = %s")
+            params.append(filters["severity"])
+        if filters.get("source_ip"):
+            conditions.append("source_ip = %s")
+            params.append(filters["source_ip"])
+        if filters.get("event_type"):
+            conditions.append("event_type = %s")
+            params.append(filters["event_type"])
+        if filters.get("host"):
+            conditions.append("host = %s")
+            params.append(filters["host"])
+        if filters.get("search"):
+            conditions.append(
+                "to_tsvector('english', coalesce(message, '')) @@ plainto_tsquery('english', %s)"
+            )
+            params.append(filters["search"])
+        where = " AND ".join(conditions) if conditions else "TRUE"
+        conn = self.get_conn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(f"SELECT count(*) FROM logsentry.logs WHERE {where}", params)
+                count: int = cur.fetchone()[0]
+            return count
+        except Exception:
+            return 0
+        finally:
+            self.put_conn(conn)
+
+    def top_source_ips(self, limit: int = 10, hours: int = 24) -> list[dict]:
+        """Most active source IPs in the last N hours."""
+        conn = self.get_conn()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT source_ip, count(*) AS cnt,
+                           max(timestamp) AS last_seen
+                    FROM logsentry.logs
+                    WHERE source_ip IS NOT NULL AND source_ip <> ''
+                      AND timestamp >= now() - interval '%s hours'
+                    GROUP BY source_ip
+                    ORDER BY cnt DESC
+                    LIMIT %s
+                    """,
+                    (hours, limit),
+                )
+                rows = cur.fetchall()
+            return [dict(r) for r in rows]
+        except Exception:
+            return []
+        finally:
+            self.put_conn(conn)
+
+    def top_rules(self, limit: int = 10, hours: int = 24) -> list[dict]:
+        """Most fired detection rules in the last N hours."""
+        conn = self.get_conn()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT rule_name, severity, count(*) AS cnt,
+                           max(created_at) AS last_fired
+                    FROM logsentry.detections
+                    WHERE created_at >= now() - interval '%s hours'
+                    GROUP BY rule_name, severity
+                    ORDER BY cnt DESC
+                    LIMIT %s
+                    """,
+                    (hours, limit),
+                )
+                rows = cur.fetchall()
+            return [dict(r) for r in rows]
+        except Exception:
+            return []
+        finally:
+            self.put_conn(conn)
+
+    def host_activity(self, limit: int = 15, hours: int = 24) -> list[dict]:
+        """Log volume per host in the last N hours."""
+        conn = self.get_conn()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT host, count(*) AS cnt,
+                           max(timestamp) AS last_seen
+                    FROM logsentry.logs
+                    WHERE timestamp >= now() - interval '%s hours'
+                    GROUP BY host
+                    ORDER BY cnt DESC
+                    LIMIT %s
+                    """,
+                    (hours, limit),
+                )
+                rows = cur.fetchall()
+            return [dict(r) for r in rows]
+        except Exception:
+            return []
+        finally:
+            self.put_conn(conn)
+
+    def query_detections(
+        self,
+        severity: str | None = None,
+        rule_name: str | None = None,
+        search: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict], int]:
+        """Query detections with filters. Returns (rows, total)."""
+        conditions: list[str] = []
+        params: list[Any] = []
+        if severity:
+            conditions.append("severity = %s")
+            params.append(severity)
+        if rule_name:
+            conditions.append("rule_name = %s")
+            params.append(rule_name)
+        if search:
+            conditions.append("description ILIKE %s")
+            params.append(f"%{search}%")
+        where = " AND ".join(conditions) if conditions else "TRUE"
+
+        conn = self.get_conn()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    f"SELECT count(*) AS total FROM logsentry.detections WHERE {where}",
+                    params,
+                )
+                total: int = cur.fetchone()["total"]
+                cur.execute(
+                    f"""
+                    SELECT id, created_at, log_id, rule_name, rule_type, severity,
+                           mitre_id, mitre_tactic, description, raw_data
+                    FROM logsentry.detections
+                    WHERE {where}
+                    ORDER BY created_at DESC
+                    LIMIT %s OFFSET %s
+                    """,
+                    params + [limit, offset],
+                )
+                rows = [dict(r) for r in cur.fetchall()]
+            return rows, total
+        except Exception:
+            return [], 0
+        finally:
+            self.put_conn(conn)
+
+    def distinct_hosts(self) -> list[str]:
+        """List hosts seen in logs (for filter dropdowns)."""
+        conn = self.get_conn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT DISTINCT host FROM logsentry.logs
+                    WHERE host IS NOT NULL AND host <> ''
+                    ORDER BY host
+                    """
+                )
+                hosts = [r[0] for r in cur.fetchall()]
+            return hosts
+        except Exception:
+            return []
         finally:
             self.put_conn(conn)
 
@@ -751,6 +928,7 @@ class AsyncLogStore:
         source_ip: str | None = None,
         event_type: str | None = None,
         search: str | None = None,
+        host: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict]:
@@ -779,6 +957,10 @@ class AsyncLogStore:
         if event_type:
             conditions.append(f"event_type = ${idx}")
             params.append(event_type)
+            idx += 1
+        if host:
+            conditions.append(f"host = ${idx}")
+            params.append(host)
             idx += 1
         if labels:
             conditions.append(f"labels @> ${idx}::jsonb")
