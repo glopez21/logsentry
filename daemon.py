@@ -558,7 +558,8 @@ class LogSentryDaemon:
                 else:
                     loop = asyncio.get_event_loop()
                     recent = await loop.run_in_executor(
-                        None, self.store.query, last_check, None, None, None, None, None, None, 5000, 0
+                        None, self.store.query,
+                        last_check, None, None, None, None, None, None, None, 5000, 0,
                     )
                 if recent:
                     await self._run_detections(recent)

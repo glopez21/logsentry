@@ -7,6 +7,14 @@ services:
       POSTGRES_PASSWORD: ${LOGSENTRY_DB_PASSWORD:-logsentry}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    cpus: "1.0"
+    mem_limit: 512m
+    memswap_limit: 512m
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U logsentry"]
       interval: 5s
@@ -52,6 +60,14 @@ services:
       - logs:/var/log
       - ./logsentry.yaml:/etc/logsentry/logsentry.yaml:ro
     restart: unless-stopped
+    cpus: "1.5"
+    mem_limit: 768m
+    memswap_limit: 768m
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD-SHELL", "python3 -c \"import os,signal; os.kill(1,0)\""]
       interval: 30s
@@ -62,13 +78,51 @@ services:
       - default
       - proxy-net
       - alertflow-net
+
+  # Web UI / API (serve mode) — the public logsentry.4rch3.io dashboard.
+  # Syslog ingest + detection stay in the 'logsentry' (daemon) service.
+  web:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      LOGSENTRY_DSN: postgresql://logsentry:${LOGSENTRY_DB_PASSWORD:-logsentry}@postgres:5432/logsentry
+      LOGSENTRY_API_KEY: ${LOGSENTRY_API_KEY:-}
+      AUGUR_URL: ${AUGUR_URL:-http://augur:8001}
+      AUGUR_API_KEY: ${AUGUR_API_KEY:-}
+      AUGUR_AGENT_NAME: ${AUGUR_AGENT_NAME:-logsentry}
+      THREATPULSE_URL: ${THREATPULSE_URL:-}
+      THREATPULSE_API_KEY: ${THREATPULSE_API_KEY:-}
+    command: ["serve", "--port", "8081"]
+    restart: unless-stopped
+    cpus: "1.0"
+    mem_limit: 512m
+    memswap_limit: 512m
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8081/health', timeout=3)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    volumes:
+      - ./logsentry.yaml:/etc/logsentry/logsentry.yaml:ro
+    networks:
+      - default
+      - proxy-net
     labels:
       - "4rch3.io.enable=true"
-      - "4rch3.io.service=logsentry"
+      - "4rch3.io.service=logsentry-web"
       - "4rch3.io.name=LogSentry"
       - "4rch3.io.description=Security log parsing, detection, and SIEM export"
       - "4rch3.io.url=https://logsentry.4rch3.io"
-      - "4rch3.io.port=8080"
+      - "4rch3.io.health=/health"
+      - "4rch3.io.port=8081"
       - "4rch3.io.public=true"
       - "4rch3.io.category=security"
       - "traefik.enable=true"
@@ -78,7 +132,7 @@ services:
       - "traefik.http.routers.logsentry.tls=true"
       - "traefik.http.routers.logsentry.tls.certresolver=cloudflare"
       - "traefik.http.routers.logsentry.middlewares=security-headers@file,cf-access-auth@file"
-      - "traefik.http.services.logsentry.loadbalancer.server.port=8080"
+      - "traefik.http.services.logsentry.loadbalancer.server.port=8081"
 
   # Init: run --init-db once, then exit
   db-init:

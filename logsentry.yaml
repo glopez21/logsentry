@@ -35,7 +35,7 @@ ingest:
     enabled: true
     bind: 0.0.0.0
     port: 514
-    protocol: udp
+    protocol: both
     rate_limit: 100.0
     rate_burst: 200
 
